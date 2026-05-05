@@ -25,7 +25,8 @@ Each top-level directory is one Dagger module:
 
 | Module | Purpose |
 |---|---|
-| `tigerfs/` | install, migrate, mount [TigerFS](https://tigerfs.io); `.build/` app provisioning helpers |
+| `tigerfs/` | install, migrate, mount [TigerFS](https://tigerfs.io); `.build/` app provisioning helpers; `snapshot()` for FUSE-free consumers |
+| `hermes/` | install the [`hermes-agent`](https://github.com/NousResearch/hermes-agent) CLI in a container; pre-build the dashboard web bundle |
 | `letta-code/` | run the `@letta-ai/letta-code` CLI in a hardened container |
 | `hermes-workspace/` | hardened build of `outsourc-e/hermes-workspace` v2.1.3, depends on `tigerfs` |
 
@@ -68,6 +69,34 @@ to the remote form `github.com/langri-sha/dagger/tigerfs@main`.
 When a dependency's API changes, run `dagger develop` in the dependent
 module so its `sdk/client.gen.ts` regenerates and TypeScript sees the
 new signatures.
+
+## Architectural posture (TigerFS + privileged FUSE)
+
+Past iterations of `hermes-workspace` leaned on FUSE-in-the-consumer-
+container, which forces `insecureRootCapabilities=true` and a root
+bootstrap phase to do `mount --bind`. That works but it's expensive in
+trust and complexity, and it tied agent persistence to a single
+container's lifecycle.
+
+The preferred posture for new work is **host-level / snapshot /
+network-service** patterns over privileged FUSE-in-Dagger. Concretely:
+
+- **Snapshot** — `dag.tigerfs().snapshot(connection, ghostKey, app)`
+  does the FUSE work in an ephemeral helper container and hands the
+  consumer a plain `Directory`. Use for seeding, config bundles, and
+  ephemeral builds where the consumer doesn't need writes.
+- **Cache volume** — for per-agent runtime state that doesn't need
+  durable cross-machine storage, prefer `withMountedCache(...)`. The
+  tradeoff is data is local to the engine; the upside is no FUSE, no
+  caps, no bootstrap dance.
+- **Network service** — TigerFS over a Postgres connection string is
+  another no-FUSE escape hatch (consumers connect over TCP and bypass
+  the file layer entirely). Worth it when consumers are SQL-friendly
+  workloads, not file-tools.
+- **FUSE in consumer** — only when persistent, live writes from the
+  consumer must round-trip to ghost.build. Today only `hermes-workspace`
+  does this; new modules should not adopt the pattern without a clear
+  reason.
 
 ## Conventions
 
