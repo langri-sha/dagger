@@ -1,0 +1,13 @@
+{
+  "name": "hermes-workspace",
+  "engineVersion": "v0.20.6",
+  "sdk": {
+    "source": "typescript"
+  },
+  "dependencies": [
+    {
+      "name": "tigerfs",
+      "source": "../tigerfs"
+    }
+  ]
+}
