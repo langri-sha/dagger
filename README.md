@@ -7,12 +7,13 @@ Reusable Dagger TypeScript modules for personal infrastructure.
 - [`tigerfs/`](./tigerfs) — install, create, migrate, and mount [TigerFS](https://tigerfs.io)
   filesystems backed by Postgres (Ghost.build / Tiger Cloud). Includes helpers
   for the `.build/` app provisioning workflow.
-- [`tailscale/`](./tailscale) — userspace-networking Tailscale sidecar (no
-  CAP_NET_ADMIN), with optional `tailscale serve` exposure.
 - [`hermes-workspace/`](./hermes-workspace) — hardened build of
   [outsourc-e/hermes-workspace](https://github.com/outsourc-e/hermes-workspace)
-  with chainable `withAperture`, `withLocalClaude`, `withLocalCodex`,
-  `withTigerFs` helpers.
+  v2.1.3 with chainable `withAperture`, `withLocalClaude`,
+  `withLocalCodex`, `withQwenOllama`, `withTigerFs`, and a root-phase
+  bootstrap that mounts per-agent ghost.build TigerFS volumes (via the
+  tigerfs module) and bind-mounts them over the standard agent home dirs
+  before dropping privileges.
 
 ## Using a module locally
 
