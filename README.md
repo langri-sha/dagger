@@ -14,6 +14,11 @@ Reusable Dagger TypeScript modules for personal infrastructure.
   into a container via the upstream installer; pre-build the dashboard
   `web/` bundle so `hermes dashboard` doesn't npm-install at first
   launch.
+- [`tailscale/`](./tailscale) — install
+  [tailscale](https://tailscale.com/) and run `tailscaled` in
+  userspace-networking mode (no CAP_NET_ADMIN, no /dev/net/tun);
+  helpers for `tailscale up`, `tailscale serve`, and `HTTP_PROXY` env
+  wiring.
 - [`letta-code/`](./letta-code) — run the
   [`@letta-ai/letta-code`](https://www.npmjs.com/package/@letta-ai/letta-code)
   CLI inside a hardened container, with chainable `container`, `code`,
