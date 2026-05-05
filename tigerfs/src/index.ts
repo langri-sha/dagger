@@ -18,6 +18,7 @@
 import {
   dag,
   Container,
+  Directory,
   Secret,
   object,
   func,
@@ -158,6 +159,77 @@ export class Tigerfs {
       `  echo "[tigerfs] app ${appName} already provisioned at ${mountPath}/${appName}"`,
       `fi`,
     ].join("\n")
+  }
+
+  /**
+   * Snapshot the contents of a TigerFS-backed app directory into a Dagger
+   * `Directory` so consumers can mount it without running FUSE inside
+   * their own container.
+   *
+   * Why: privileged FUSE-in-Dagger needs `insecureRootCapabilities=true`
+   * on every consumer service. The simpler pattern is to do the FUSE
+   * work in a one-shot helper container, snapshot the file tree it
+   * exposes, and hand the consumer a plain Directory artifact they
+   * mount with `withMountedDirectory` (no caps, no FUSE).
+   *
+   * Trade-off: the result is read-only at the consumer side. If you need
+   * persistent writes, keep the FUSE mount in the consumer container or
+   * build an upload step that pushes a Directory back into TigerFS.
+   *
+   * Steps inside the helper container:
+   *   1. install tigerfs + ghost CLIs into debian:trixie-slim
+   *   2. tigerfs migrate / mount ghost:<connection> at /mnt/tigerfs
+   *   3. provision the app (no-op if it already exists)
+   *   4. cp -a the app dir into /snapshot
+   *   5. unmount and return /snapshot
+   */
+  @func()
+  snapshot(
+    /**
+     * Connection string. ghost:NAME, tiger:ID, or postgres://...
+     */
+    connection: string,
+    ghostApiKey: Secret,
+    /**
+     * App name to snapshot. Provisioned on demand if missing.
+     */
+    app: string,
+    /**
+     * App kind ("markdown" | "markdown,history" | "plaintext"). Defaults
+     * to "plaintext" so binary blobs round-trip verbatim.
+     */
+    appKind?: string,
+  ): Directory {
+    const kind = appKind?.trim() || "plaintext"
+    const mountPath = "/mnt/tigerfs"
+    const snapshotPath = "/snapshot"
+    const mount = this.mountSnippet(connection, mountPath)
+    const build = this.buildAppSnippet(mountPath, app, kind)
+
+    return this.install(
+      dag
+        .container()
+        .from("debian:trixie-slim")
+        .withMountedCache(
+          "/var/cache/apt",
+          dag.cacheVolume("apt-cache"),
+          { sharing: CacheSharingMode.Locked },
+        ),
+    )
+      .withSecretVariable("GHOST_API_KEY", ghostApiKey)
+      .withExec([
+        "sh",
+        "-c",
+        `set -e
+${mount}
+${build}
+mkdir -p ${snapshotPath}
+cp -a "${mountPath}/${app}/." "${snapshotPath}/"
+fusermount3 -u "${mountPath}" || umount "${mountPath}"
+echo "[tigerfs] snapshot ${app} (${kind}) -> ${snapshotPath}"
+ls -la "${snapshotPath}" | head -20`,
+      ])
+      .directory(snapshotPath)
   }
 
   /**
