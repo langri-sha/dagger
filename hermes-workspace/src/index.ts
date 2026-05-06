@@ -36,10 +36,10 @@ const HERMES_WORKSPACE_DIR = "/opt/hermes-workspace"
 const HERMES_WORKSPACE_REPO = "https://github.com/outsourc-e/hermes-workspace.git"
 // outsourc-e/hermes-workspace v2.1.3 — annotated tag points to this commit.
 const HERMES_WORKSPACE_REF = "58878ba7467a3efa07168c76353cacabcc1e17cd"
-// NousResearch/hermes-agent installer SHA. Pinned for reproducibility; the
-// upstream workspace install.sh tracks `main` but we want a stable build.
+// NousResearch/hermes-agent installer SHA. Pinned for reproducibility;
+// passed through to dag.hermes().install() so the upstream installer
+// pulls a known commit instead of moving with `main`.
 const HERMES_AGENT_REF = "167b5648ea609aafa85f56c5714f7abda5091ed6"
-const HERMES_AGENT_INSTALLER_URL = `https://raw.githubusercontent.com/NousResearch/hermes-agent/${HERMES_AGENT_REF}/scripts/install.sh`
 // Pinned npm package versions for the in-container CLIs. Bump with
 // explicit commits so changes are reviewable and the image is reproducible.
 const CLAUDE_CODE_VERSION = "2.1.126"
@@ -465,29 +465,6 @@ export class HermesWorkspace {
       .withExec(["install", "-d", "-m", "0750", "-o", HERMES_USER, "-g", HERMES_USER, HERMES_PI_HOME])
       .withExec(["install", "-d", "-m", "0750", "-o", HERMES_USER, "-g", HERMES_USER, HERMES_FEYNMAN_HOME])
       .withExec(["install", "-d", "-m", "0750", "-o", HERMES_USER, "-g", HERMES_USER, WORKSPACE_DIR])
-      // Install Hermes Agent with Nous's upstream non-interactive installer
-      // (this is what hermes-workspace's own install.sh delegates to).
-      // Keep agent code in the root-owned FHS location while pointing
-      // runtime state at the isolated non-root HERMES_HOME.
-      // The installer script itself is pinned via HERMES_AGENT_INSTALLER_URL,
-      // but the installer pulls hermes-agent@main at run time, so we cannot
-      // assert a specific agent SHA here. Workspace v2.1.3's own install.sh
-      // accepts the same drift.
-      .withExec([
-        "bash",
-        "-lc",
-        `curl -fsSL ${HERMES_AGENT_INSTALLER_URL} | bash -s -- --skip-setup --hermes-home ${HERMES_HOME}`,
-      ])
-      // Pre-build the dashboard's web bundle. `hermes dashboard` exits 1
-      // on first launch otherwise — _build_web_ui in hermes_cli/main.py
-      // shells out to npm and drops the build into hermes_cli/web_dist;
-      // doing it once at image-build time keeps runtime startup fast and
-      // deterministic across cache-volume resets.
-      .withExec([
-        "bash",
-        "-lc",
-        `cd /usr/local/lib/hermes-agent/web && npm install --no-audit --no-fund --prefer-offline && npm run build && test -e /usr/local/lib/hermes-agent/hermes_cli/web_dist/index.html`,
-      ])
       // Activate the pnpm version pinned by Node's bundled corepack.
       .withExec(["bash", "-lc", "corepack enable && corepack prepare pnpm@latest --activate"])
       // Bun (installed via npm to keep the dependency chain simple) is
@@ -511,6 +488,14 @@ export class HermesWorkspace {
     // `ghost`, and fusermount3 (SUID-root) — everything the bootstrap's
     // root phase needs for per-agent FUSE mounts.
     ctr = dag.tigerfs().install(ctr)
+
+    // Hermes Agent (Nous installer) + the dashboard web bundle. Building
+    // the bundle at image-build time keeps `hermes dashboard` from
+    // shelling out to npm at first launch — that was the original
+    // failure mode that left the workspace UI's Skills / Sessions panes
+    // disabled.
+    ctr = dag.hermes().install(ctr, HERMES_HOME, HERMES_AGENT_REF)
+    ctr = dag.hermes().withDashboardBundle(ctr)
 
     ctr = ctr
       // Now that fuse3 has created /etc/group's `fuse` entry, add hermes

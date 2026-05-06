@@ -8,6 +8,14 @@
     {
       "name": "tigerfs",
       "source": "../tigerfs"
+    },
+    {
+      "name": "hermes",
+      "source": "../hermes"
+    },
+    {
+      "name": "tailscale",
+      "source": "../tailscale"
     }
   ]
 }
