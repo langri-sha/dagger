@@ -81,7 +81,7 @@ export class HermesWorkspace {
    * layers or generated config.
    */
   @func()
-  hermesWorkspaceContainer(
+  async hermesWorkspaceContainer(
     source: Directory,
     openrouterApiKey?: Secret,
     anthropicApiKey?: Secret,
@@ -103,7 +103,7 @@ export class HermesWorkspace {
      */
     gitUserName?: string,
     gitUserEmail?: string,
-  ): Container {
+  ): Promise<Container> {
     const resolvedPort = normalizePort(port)
     const resolvedUid = normalizeUid(hermesUid)
     const resolvedUidStr = String(resolvedUid)
@@ -165,6 +165,34 @@ export class HermesWorkspace {
     // and writes through tigerfs without changing $HERMES_HOME. CAP_SYS_ADMIN
     // (insecureRootCapabilities=true) is required for both FUSE mount(8) and
     // the bind-mount.
+    //
+    // The migrate + mount + readiness loop comes from
+    // dag.tigerfs().mountSnippet() — kept in the tigerfs module so tightening
+    // semantics (strict failure, longer timeouts) updates everywhere at once.
+    const tigerfsMount = await dag
+      .tigerfs()
+      .mountSnippet("ghost:$ts_db", "$ts_internal", {
+        logFile: "/tmp/tigerfs-$ts_db.log",
+      })
+
+    // Tailscale entrypoint snippets come from dag.tailscale(). Hostname is
+    // baked at build time (resolvedTsHostname); the auth key is read from
+    // the TS_AUTHKEY env var the entrypoint guards on. The proxy port and
+    // state-dir defaults are pinned here so behaviour matches the prior
+    // inline implementation.
+    const tsDaemon = await dag
+      .tailscale()
+      .daemonSnippet(resolvedTsHostname, {
+        authKeyEnv: "TS_AUTHKEY",
+        proxyPort: TS_PROXY_PORT,
+        stateDir: `/var/tmp/${TS_STATE_SUBDIR}`,
+      })
+    const tsServe = resolvedServe
+      ? await dag.tailscale().serveSnippet("http://127.0.0.1:$PORT")
+      : ""
+    const tsProxyEnv = await dag
+      .tailscale()
+      .proxyEnvSnippet({ proxyPort: TS_PROXY_PORT })
     const bootstrap = [
       "#!/usr/bin/env bash",
       "set -euo pipefail",
@@ -186,20 +214,7 @@ export class HermesWorkspace {
       "    ts_internal=\"/var/tigerfs/${alias_lower}\"",
       "    mkdir -p \"$ts_internal\" \"$ts_target\"",
       "",
-      "    echo \"[bootstrap] tigerfs migrate ghost:$ts_db\"",
-      "    tigerfs migrate \"ghost:$ts_db\" >\"/tmp/tigerfs-$ts_db-migrate.log\" 2>&1",
-      "",
-      "    echo \"[bootstrap] tigerfs mount ghost:$ts_db -> $ts_internal\"",
-      "    tigerfs mount \"ghost:$ts_db\" \"$ts_internal\" >\"/tmp/tigerfs-$ts_db.log\" 2>&1 &",
-      "    for i in $(seq 1 60); do",
-      "      if mountpoint -q \"$ts_internal\"; then break; fi",
-      "      sleep 0.5",
-      "    done",
-      "    if ! mountpoint -q \"$ts_internal\"; then",
-      "      echo \"[bootstrap] tigerfs mount failed for ghost:$ts_db; see /tmp/tigerfs-$ts_db.log\" >&2",
-      "      cat \"/tmp/tigerfs-$ts_db.log\" >&2",
-      "      exit 1",
-      "    fi",
+      indent(tigerfsMount, 4),
       "",
       "    # Provision a plaintext app called 'home' the first time we mount this",
       "    # database. plaintext stores arbitrary bytes verbatim — works for",
@@ -275,50 +290,15 @@ export class HermesWorkspace {
       "# reach the tailnet via the SOCKS5/HTTP proxy on localhost:" + TS_PROXY_PORT + ".",
       "# Started BEFORE the gateway fork so the gateway's outbound calls inherit",
       "# HTTP_PROXY too. Public-internet calls still pass through cleanly.",
+      "#",
+      "# Daemon / serve / proxy-env snippets come from dag.tailscale(); the",
+      "# only thing we wire in directly is the if-guard, the optional --require",
+      "# shim that makes Node 22's native fetch honour HTTP_PROXY (via undici",
+      "# EnvHttpProxyAgent), and the resolvedServe gate.",
       "if [ -n \"${TS_AUTHKEY:-}\" ]; then",
-      `  TS_STATE_DIR="/var/tmp/${TS_STATE_SUBDIR}"`,
-      '  TS_SOCKET="$TS_STATE_DIR/tailscaled.sock"',
-      '  mkdir -p "$TS_STATE_DIR"',
-      "  echo '[tailscale] starting tailscaled (userspace networking, proxy on " + String(TS_PROXY_PORT) + ")'",
-      "  tailscaled \\",
-      "    --tun=userspace-networking \\",
-      `    --socks5-server=localhost:${TS_PROXY_PORT} \\`,
-      `    --outbound-http-proxy-listen=localhost:${TS_PROXY_PORT} \\`,
-      '    --statedir="$TS_STATE_DIR" \\',
-      '    --socket="$TS_SOCKET" \\',
-      "    >/tmp/tailscaled.log 2>&1 &",
-      "  for i in $(seq 1 60); do",
-      '    if [ -S "$TS_SOCKET" ]; then break; fi',
-      "    sleep 0.5",
-      "  done",
-      `  if ! tailscale --socket="$TS_SOCKET" up --authkey="$TS_AUTHKEY" --hostname="${resolvedTsHostname}" --accept-dns --ssh=false --reset >/tmp/tailscale-up.log 2>&1; then`,
-      "    echo '[tailscale] tailscale up failed; see /tmp/tailscale-up.log'",
-      "    cat /tmp/tailscale-up.log >&2 || true",
-      "  else",
-      `    echo "[tailscale] joined tailnet as ${resolvedTsHostname}"`,
-      "  fi",
-      ...(resolvedServe ? [
-        // tailscale serve advertises the workspace UI back into the tailnet
-        // at https://<hostname>.<tailnet>.ts.net/. Inbound connections are
-        // terminated by the userspace tailscaled and proxied to the local
-        // vite port — no kernel mounts, no extra caps.
-        `  if tailscale --socket="$TS_SOCKET" serve --bg "http://127.0.0.1:$PORT" >/tmp/tailscale-serve.log 2>&1; then`,
-        `    echo "[tailscale] serving workspace UI to tailnet"`,
-        "  else",
-        `    echo "[tailscale] tailscale serve failed; see /tmp/tailscale-serve.log" >&2`,
-        "    cat /tmp/tailscale-serve.log >&2 || true",
-        "  fi",
-      ] : []),
-      // NODE_OPTIONS preloads a tiny CJS shim that installs undici's
-      // EnvHttpProxyAgent — without it Node 22's native fetch() ignores
-      // HTTP_PROXY and the workspace's tailnet calls would bypass the proxy.
-      // The Python-based gateway picks up the proxy directly via env.
-      `  export HTTP_PROXY="http://localhost:${TS_PROXY_PORT}"`,
-      `  export HTTPS_PROXY="http://localhost:${TS_PROXY_PORT}"`,
-      `  export http_proxy="http://localhost:${TS_PROXY_PORT}"`,
-      `  export https_proxy="http://localhost:${TS_PROXY_PORT}"`,
-      "  export NO_PROXY=\"127.0.0.1,localhost,::1\"",
-      "  export no_proxy=\"127.0.0.1,localhost,::1\"",
+      indent(tsDaemon, 2),
+      ...(resolvedServe ? [indent(tsServe, 2)] : []),
+      indent(tsProxyEnv, 2),
       `  export NODE_OPTIONS="$NODE_OPTIONS --require=${TS_BOOTSTRAP_PATH}"`,
       "fi",
       "",
@@ -843,7 +823,7 @@ export class HermesWorkspace {
    * runtime if both are supplied; tigerfs wins on path order).
    */
   @func()
-  hermesWorkspaceService(
+  async hermesWorkspaceService(
     source: Directory,
     openrouterApiKey?: Secret,
     anthropicApiKey?: Secret,
@@ -878,8 +858,8 @@ export class HermesWorkspace {
     gitUserName?: string,
     /** Git user.email written to /etc/gitconfig for in-container commits. */
     gitUserEmail?: string,
-  ): Service {
-    let ctr = this.hermesWorkspaceContainer(
+  ): Promise<Service> {
+    let ctr = await this.hermesWorkspaceContainer(
       source,
       openrouterApiKey,
       anthropicApiKey,
@@ -946,7 +926,7 @@ export class HermesWorkspace {
     apertureBaseUrl?: string,
     hermesUid?: number,
   ): Promise<string> {
-    const ctr = this.hermesWorkspaceContainer(
+    const ctr = await this.hermesWorkspaceContainer(
       source,
       openrouterApiKey,
       anthropicApiKey,
@@ -1070,4 +1050,17 @@ function normalizeUid(value: number | undefined): number {
   // the typical NSS overflow UID (65534=nobody) so chowns don't collide.
   if (uid < 1000 || uid > 65533) return DEFAULT_HERMES_UID
   return uid
+}
+
+// Indent every non-empty line of `text` by `n` spaces. Used to splice
+// snippet output from dependent modules into the surrounding shell
+// scripts at the right nesting level (tigerfs mountSnippet inside the
+// per-DB for-loop, tailscale daemonSnippet inside the if [TS_AUTHKEY]
+// guard).
+function indent(text: string, n: number): string {
+  const pad = " ".repeat(n)
+  return text
+    .split("\n")
+    .map((l) => (l.length ? pad + l : l))
+    .join("\n")
 }
