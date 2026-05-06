@@ -401,20 +401,6 @@ export class HermesWorkspace {
         "tmux",
         "build-essential",
       ])
-      // Tailscale APT repo + binary. Userspace networking only — no kernel
-      // module, no /dev/net/tun, no privileged nesting required at runtime.
-      .withExec([
-        "bash",
-        "-lc",
-        [
-          "set -e",
-          "install -d -m 0755 /usr/share/keyrings /etc/apt/sources.list.d",
-          "curl -fsSL https://pkgs.tailscale.com/stable/debian/bookworm.noarmor.gpg -o /usr/share/keyrings/tailscale-archive-keyring.gpg",
-          "curl -fsSL https://pkgs.tailscale.com/stable/debian/bookworm.tailscale-keyring.list -o /etc/apt/sources.list.d/tailscale.list",
-          "apt-get update",
-          "apt-get install -y --no-install-recommends tailscale",
-        ].join(" && "),
-      ])
       .withExec(["rm", "-rf", "/var/lib/apt/lists"])
       .withEnvVariable("HERMES_HOME", HERMES_HOME)
       // node:22-bookworm-slim ships with a `node` user at UID 1000 (a
@@ -482,6 +468,13 @@ export class HermesWorkspace {
           `@companion-ai/feynman@${FEYNMAN_VERSION} ` +
           `@mariozechner/pi-coding-agent@${PI_VERSION}`,
       ])
+
+    // Tailscale CLI + tailscaled, delegated to the tailscale module.
+    // Userspace networking only — no /dev/net/tun, no CAP_NET_ADMIN at
+    // runtime. The entrypoint runs tailscaled as a SOCKS5/HTTP proxy on
+    // localhost so apps inside the container reach the tailnet without
+    // kernel-level wiring.
+    ctr = dag.tailscale().install(ctr)
 
     // Ghost + TigerFS CLIs and the fuse3 userspace runtime, delegated to
     // the tigerfs module. Provides `tigerfs migrate`, `tigerfs mount`,
