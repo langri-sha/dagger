@@ -1,0 +1,13 @@
+{
+  "name": "paperclip",
+  "engineVersion": "v0.20.6",
+  "sdk": {
+    "source": "typescript"
+  },
+  "dependencies": [
+    {
+      "name": "tailscale",
+      "source": "../tailscale"
+    }
+  ]
+}

@@ -29,6 +29,7 @@ Each top-level directory is one Dagger module:
 | `hermes/` | install the [`hermes-agent`](https://github.com/NousResearch/hermes-agent) CLI in a container; pre-build the dashboard web bundle |
 | `tailscale/` | install tailscale + tailscaled and run them in userspace-networking mode (no caps); daemon / serve / proxy-env snippets |
 | `letta-code/` | run the `@letta-ai/letta-code` CLI in a hardened container |
+| `paperclip/` | build and run `paperclipai/paperclip`; locks `/paperclip` cache volume for embedded PGlite/state; optional userspace Tailscale via `tailscale` |
 | `hermes-workspace/` | hardened build of `outsourc-e/hermes-workspace` v2.1.3, depends on `tigerfs` |
 
 Adding a new module: scaffold a sibling directory mirroring the layout

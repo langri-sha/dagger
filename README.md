@@ -23,6 +23,11 @@ Reusable Dagger TypeScript modules for personal infrastructure.
   [`@letta-ai/letta-code`](https://www.npmjs.com/package/@letta-ai/letta-code)
   CLI inside a hardened container, with chainable `container`, `code`,
   `run`, and `terminal` functions.
+- [`paperclip/`](./paperclip) — build and run
+  [`paperclipai/paperclip`](https://github.com/paperclipai/paperclip) as a
+  Dagger service, with `/paperclip` on a locked cache volume for embedded
+  PGlite/state and optional userspace Tailscale wiring via the local
+  `tailscale` module.
 - [`hermes-workspace/`](./hermes-workspace) — hardened build of
   [outsourc-e/hermes-workspace](https://github.com/outsourc-e/hermes-workspace)
   v2.1.3 with chainable `withAperture`, `withLocalClaude`,

@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.dagger.tmp/
+*.tsbuildinfo
+/**/node_modules/**
+/**/.pnpm-store/**
+/.env
