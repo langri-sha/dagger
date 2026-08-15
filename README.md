@@ -1,6 +1,12 @@
-# dagger
+<p align="center">
+  <img src="docs/assets/dagger.svg" width="220" alt="Interlocking modules feeding a dagger-shaped automation pipeline">
+</p>
 
-Reusable Dagger TypeScript modules for personal infrastructure.
+<h1 align="center">dagger</h1>
+
+<p align="center">
+  Reusable Dagger TypeScript modules for personal infrastructure.
+</p>
 
 ## Modules
 
