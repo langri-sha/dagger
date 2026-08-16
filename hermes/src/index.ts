@@ -19,18 +19,13 @@
  * The workspace UI (`dagger/hermes-workspace/`) layers on top of this with
  * the Vite dev server + tailscale + tigerfs mounts.
  */
-import {
-  dag,
-  Container,
-  object,
-  func,
-} from "@dagger.io/dagger"
+import { dag, Container, object, func } from '@dagger.io/dagger'
 
-const DEFAULT_HERMES_HOME = "/home/hermes/.hermes"
-const DEFAULT_AGENT_PATH = "/usr/local/lib/hermes-agent"
+const DEFAULT_HERMES_HOME = '/home/hermes/.hermes'
+const DEFAULT_AGENT_PATH = '/usr/local/lib/hermes-agent'
 // Pinned installer commit. Bump explicitly so changes are reviewable; the
 // upstream `main` branch is a moving target.
-const DEFAULT_AGENT_REF = "167b5648ea609aafa85f56c5714f7abda5091ed6"
+const DEFAULT_AGENT_REF = '167b5648ea609aafa85f56c5714f7abda5091ed6'
 
 @object()
 export class Hermes {
@@ -62,8 +57,8 @@ export class Hermes {
     const ref = agentRef?.trim() || DEFAULT_AGENT_REF
     const url = `https://raw.githubusercontent.com/NousResearch/hermes-agent/${ref}/scripts/install.sh`
     return ctr.withExec([
-      "bash",
-      "-lc",
+      'bash',
+      '-lc',
       `curl -fsSL ${url} | bash -s -- --skip-setup --hermes-home ${home}`,
     ])
   }
@@ -92,8 +87,8 @@ export class Hermes {
   ): Container {
     const path = agentPath?.trim() || DEFAULT_AGENT_PATH
     return ctr.withExec([
-      "bash",
-      "-lc",
+      'bash',
+      '-lc',
       `cd ${path}/web && npm install --no-audit --no-fund --prefer-offline && npm run build && test -e ${path}/hermes_cli/web_dist/index.html`,
     ])
   }
@@ -115,37 +110,37 @@ export class Hermes {
   ): Container {
     const base = dag
       .container()
-      .from("debian:trixie-slim")
-      .withExec(["apt-get", "update", "-qq"])
+      .from('debian:trixie-slim')
+      .withExec(['apt-get', 'update', '-qq'])
       .withExec([
-        "apt-get",
-        "install",
-        "-y",
-        "--no-install-recommends",
-        "bash",
-        "ca-certificates",
-        "curl",
-        "git",
-        "python3",
-        "python3-pip",
-        "python3-venv",
-        "build-essential",
+        'apt-get',
+        'install',
+        '-y',
+        '--no-install-recommends',
+        'bash',
+        'ca-certificates',
+        'curl',
+        'git',
+        'python3',
+        'python3-pip',
+        'python3-venv',
+        'build-essential',
       ])
-      .withExec(["rm", "-rf", "/var/lib/apt/lists"])
+      .withExec(['rm', '-rf', '/var/lib/apt/lists'])
 
     return this.install(base, hermesHome, agentRef).withExec([
-      "sh",
-      "-c",
+      'sh',
+      '-c',
       [
         "echo '== hermes version =='",
-        "hermes version || hermes --version",
-        "echo",
+        'hermes version || hermes --version',
+        'echo',
         "echo '== hermes gateway --help (first 5 lines) =='",
         "hermes gateway --help 2>&1 | sed -n '1,5p'",
-        "echo",
+        'echo',
         "echo '== hermes dashboard --help (first 5 lines) =='",
         "hermes dashboard --help 2>&1 | sed -n '1,5p'",
-      ].join("\n"),
+      ].join('\n'),
     ])
   }
 }

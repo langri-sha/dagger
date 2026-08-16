@@ -15,10 +15,10 @@ import {
   Secret,
   Container,
   Directory,
-} from "@dagger.io/dagger"
+} from '@dagger.io/dagger'
 
-const WORKSPACE_DIR = "/workspace"
-const LETTA_BASE_URL = "https://api.letta.com"
+const WORKSPACE_DIR = '/workspace'
+const LETTA_BASE_URL = 'https://api.letta.com'
 
 @object()
 export class LettaCode {
@@ -31,14 +31,23 @@ export class LettaCode {
   container(apiKey: Secret): Container {
     return dag
       .container()
-      .from("node:current-slim")
-      .withExec(["apt-get", "update"])
-      .withExec(["apt-get", "install", "-y", "gh", "python3", "make", "g++", "git"])
-      .withExec(["npm", "install", "-g", "bun"])
-      .withEnvVariable("PATH", "/root/.bun/bin:$PATH", { expand: true })
-      .withExec(["bun", "install", "-g", "@letta-ai/letta-code"])
-      .withSecretVariable("LETTA_API_KEY", apiKey)
-      .withEnvVariable("LETTA_BASE_URL", LETTA_BASE_URL)
+      .from('node:current-slim')
+      .withExec(['apt-get', 'update'])
+      .withExec([
+        'apt-get',
+        'install',
+        '-y',
+        'gh',
+        'python3',
+        'make',
+        'g++',
+        'git',
+      ])
+      .withExec(['npm', 'install', '-g', 'bun'])
+      .withEnvVariable('PATH', '/root/.bun/bin:$PATH', { expand: true })
+      .withExec(['bun', 'install', '-g', '@letta-ai/letta-code'])
+      .withSecretVariable('LETTA_API_KEY', apiKey)
+      .withEnvVariable('LETTA_BASE_URL', LETTA_BASE_URL)
   }
 
   /**
@@ -46,17 +55,13 @@ export class LettaCode {
    * mounted at /workspace, optionally pinning an agent id via env.
    */
   @func()
-  code(
-    apiKey: Secret,
-    source: Directory,
-    agentId?: string,
-  ): Container {
+  code(apiKey: Secret, source: Directory, agentId?: string): Container {
     let ctr = this.container(apiKey)
       .withWorkdir(WORKSPACE_DIR)
       .withDirectory(WORKSPACE_DIR, source)
 
     if (agentId) {
-      ctr = ctr.withEnvVariable("LETTA_AGENT_ID", agentId)
+      ctr = ctr.withEnvVariable('LETTA_AGENT_ID', agentId)
     }
 
     return ctr
@@ -73,7 +78,7 @@ export class LettaCode {
     agentId?: string,
   ): Promise<string> {
     return this.code(apiKey, source, agentId)
-      .withExec(["letta", "-p", prompt, "--output-format", "text"])
+      .withExec(['letta', '-p', prompt, '--output-format', 'text'])
       .stdout()
   }
 
@@ -88,10 +93,9 @@ export class LettaCode {
     agentId?: string,
     yolo?: boolean,
   ): Container {
-    const cmd = ["letta"]
-    if (yolo) cmd.push("--yolo")
+    const cmd = ['letta']
+    if (yolo) cmd.push('--yolo')
 
-    return this.code(apiKey, source, agentId)
-      .terminal({ cmd })
+    return this.code(apiKey, source, agentId).terminal({ cmd })
   }
 }
