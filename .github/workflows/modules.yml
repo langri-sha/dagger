@@ -1,0 +1,68 @@
+name: Modules
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/modules.yml'
+      - '*/dagger.json'
+      - '*/src/**'
+      - '*/tsconfig.json'
+  pull_request:
+    paths:
+      - '.github/workflows/modules.yml'
+      - '*/dagger.json'
+      - '*/src/**'
+      - '*/tsconfig.json'
+
+jobs:
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup PNPM
+        uses: langri-sha/github/actions/pnpm@v0.14.1
+
+      - name: Resolve engine version
+        id: engine
+        run: |
+          versions=$(jq -r .engineVersion */dagger.json | sort -u)
+
+          if [[ $(wc -l <<< "$versions") -ne 1 ]]; then
+            echo "::error::Modules disagree on engineVersion: $(tr '\n' ' ' <<< "$versions")"
+            exit 1
+          fi
+
+          echo "version=${versions#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Install Dagger
+        env:
+          DAGGER_VERSION: ${{ steps.engine.outputs.version }}
+        run: |
+          curl -fsSL https://dl.dagger.io/dagger/install.sh |
+            BIN_DIR=/usr/local/bin sh
+
+      - name: Generate SDKs
+        run: pnpm dagger:develop
+
+      - name: Check for drift
+        run: |
+          if [[ $(git status --porcelain) ]]; then
+            echo '::error::`dagger develop` rewrote tracked files. Regenerate them locally and commit the result.'
+            git status --porcelain
+            git diff
+            exit 1
+          fi
+
+      - name: Typecheck
+        run: pnpm check:types
