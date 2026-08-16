@@ -6,8 +6,8 @@ Context for AI coding agents working in this repo.
 
 A monorepo of small, independent Dagger TypeScript modules used by the
 maintainer's personal infrastructure (workspaces, CLI runners,
-ghost.build-backed FUSE mounts). Modules can be installed individually
-from this repo:
+ghost.build-backed FUSE mounts). Modules can be installed individually from this
+repo:
 
 ```sh
 dagger install github.com/langri-sha/dagger/<module>@main
@@ -23,22 +23,24 @@ dagger install ../dagger/<module>
 
 Each top-level directory is one Dagger module:
 
-| Module | Purpose |
-|---|---|
-| `tigerfs/` | install, migrate, mount [TigerFS](https://tigerfs.io); `.build/` app provisioning helpers; `snapshot()` for FUSE-free consumers |
-| `hermes/` | install the [`hermes-agent`](https://github.com/NousResearch/hermes-agent) CLI in a container; pre-build the dashboard web bundle |
-| `tailscale/` | install tailscale + tailscaled and run them in userspace-networking mode (no caps); daemon / serve / proxy-env snippets |
-| `letta-code/` | run the `@letta-ai/letta-code` CLI in a hardened container |
-| `paperclip/` | build and run `paperclipai/paperclip`; locks `/paperclip` cache volume for embedded PGlite/state; optional userspace Tailscale via `tailscale` |
-| `hermes-workspace/` | hardened build of `outsourc-e/hermes-workspace` v2.1.3, depends on `tigerfs` |
+| Module              | Purpose                                                                                                                                        |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tigerfs/`          | install, migrate, mount [TigerFS](https://tigerfs.io); `.build/` app provisioning helpers; `snapshot()` for FUSE-free consumers                |
+| `hermes/`           | install the [`hermes-agent`](https://github.com/NousResearch/hermes-agent) CLI in a container; pre-build the dashboard web bundle              |
+| `tailscale/`        | install tailscale + tailscaled and run them in userspace-networking mode (no caps); daemon / serve / proxy-env snippets                        |
+| `letta-code/`       | run the `@letta-ai/letta-code` CLI in a hardened container                                                                                     |
+| `paperclip/`        | build and run `paperclipai/paperclip`; locks `/paperclip` cache volume for embedded PGlite/state; optional userspace Tailscale via `tailscale` |
+| `hermes-workspace/` | hardened build of `outsourc-e/hermes-workspace` v2.1.3, depends on `tigerfs`                                                                   |
 
-Adding a new module: scaffold a sibling directory mirroring the layout
-below, then update `README.md` so the public index stays accurate.
+Adding a new module: scaffold a sibling directory mirroring the layout below,
+then update `readme.md` so the public index stays accurate. Nothing in
+`.projenrc.ts` needs to change — the root tooling discovers modules by globbing
+`*/dagger.json`.
 
 ## Module layout
 
-Every module follows the same skeleton (`dagger develop` generates `sdk/`
-on first init):
+Every module follows the same skeleton (`dagger develop` generates `sdk/` on
+first init):
 
 ```
 <module>/
@@ -51,8 +53,49 @@ on first init):
 ```
 
 The class name in `src/index.ts` is derived from the module name in
-`dagger.json` (`hermes-workspace` → `HermesWorkspace`). Don't rename one
-without the other.
+`dagger.json` (`hermes-workspace` → `HermesWorkspace`). Don't rename one without
+the other.
+
+## Who owns which file
+
+Projen manages the repository root. It does not manage anything inside a module
+directory, and it must not be made to: `dagger develop` regenerates those files
+from the SDK's own templates, so a file written by both tools flips back and
+forth on every run.
+
+| Owner                                   | Files                                                                                                                                                                                              |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Projen (`.projenrc.ts` → `pnpm projen`) | root `package.json`, `pnpm-workspace.yaml`, `renovate.json5`, `prettier.config.js`, `license`, `CODEOWNERS`, `.editorconfig`, root `.gitignore` / `.gitattributes` / `.prettierignore`, `.projen/` |
+| Dagger (`dagger develop`)               | `<module>/dagger.json`, `<module>/package.json`, `<module>/tsconfig.json`, `<module>/yarn.lock`, `<module>/.gitignore`, `<module>/.gitattributes`, `<module>/sdk/`                                 |
+| You                                     | `<module>/src/**`, `<module>/LICENSE`, docs                                                                                                                                                        |
+
+The modules are deliberately **not** pnpm workspace packages —
+`pnpm-workspace.yaml` pins `packages: []`. Each one is independently installable
+and the Dagger runtime builds it with Yarn inside its own container, so
+enrolling them would mean a package-manager migration for no gain. The root
+`node_modules/` exists only to run Projen and Prettier.
+
+Because Dagger owns the module manifests, Renovate is configured to skip
+`*/package.json` (its `typescript` pin comes from the SDK) and to track
+`engineVersion` across all six `dagger.json` files through a custom manager,
+grouped into a single "Dagger engine" PR.
+
+## Root commands
+
+```sh
+pnpm projen           # synthesize root config; idempotent
+pnpm dagger:develop   # regenerate sdk/ in every module
+pnpm check:types      # tsc --noEmit per module, against its generated sdk/
+pnpm format           # prettier --write .
+```
+
+`check:types` needs `sdk/` present, so run `dagger:develop` first on a fresh
+clone. It is the only check that catches cross-module signature drift —
+`dagger functions` loads a module without typechecking it, so a call that passes
+the wrong arguments to another module's `@func()` still introspects cleanly.
+
+Run `dagger develop` with a CLI matching the `engineVersion` in `dagger.json`,
+or it will silently rewrite that field to the CLI's own version.
 
 ## Inter-module dependencies
 
@@ -64,56 +107,51 @@ without the other.
 ]
 ```
 
-This works while iterating locally. When publishing to consumers, the
-local-path source is fine if they clone the whole repo; otherwise switch
-to the remote form `github.com/langri-sha/dagger/tigerfs@main`.
+This works while iterating locally. When publishing to consumers, the local-path
+source is fine if they clone the whole repo; otherwise switch to the remote form
+`github.com/langri-sha/dagger/tigerfs@main`.
 
-When a dependency's API changes, run `dagger develop` in the dependent
-module so its `sdk/client.gen.ts` regenerates and TypeScript sees the
-new signatures.
+When a dependency's API changes, run `dagger develop` in the dependent module so
+its `sdk/client.gen.ts` regenerates and TypeScript sees the new signatures.
 
 ## Architectural posture (TigerFS + privileged FUSE)
 
-Past iterations of `hermes-workspace` leaned on FUSE-in-the-consumer-
-container, which forces `insecureRootCapabilities=true` and a root
-bootstrap phase to do `mount --bind`. That works but it's expensive in
-trust and complexity, and it tied agent persistence to a single
-container's lifecycle.
+Past iterations of `hermes-workspace` leaned on FUSE-in-the-consumer- container,
+which forces `insecureRootCapabilities=true` and a root bootstrap phase to do
+`mount --bind`. That works but it's expensive in trust and complexity, and it
+tied agent persistence to a single container's lifecycle.
 
 The preferred posture for new work is **host-level / snapshot /
 network-service** patterns over privileged FUSE-in-Dagger. Concretely:
 
-- **Snapshot** — `dag.tigerfs().snapshot(connection, ghostKey, app)`
-  does the FUSE work in an ephemeral helper container and hands the
-  consumer a plain `Directory`. Use for seeding, config bundles, and
-  ephemeral builds where the consumer doesn't need writes.
-- **Cache volume** — for per-agent runtime state that doesn't need
-  durable cross-machine storage, prefer `withMountedCache(...)`. The
-  tradeoff is data is local to the engine; the upside is no FUSE, no
-  caps, no bootstrap dance.
-- **Network service** — TigerFS over a Postgres connection string is
-  another no-FUSE escape hatch (consumers connect over TCP and bypass
-  the file layer entirely). Worth it when consumers are SQL-friendly
-  workloads, not file-tools.
-- **FUSE in consumer** — only when persistent, live writes from the
-  consumer must round-trip to ghost.build. Today only `hermes-workspace`
-  does this; new modules should not adopt the pattern without a clear
-  reason.
+- **Snapshot** — `dag.tigerfs().snapshot(connection, ghostKey, app)` does the
+  FUSE work in an ephemeral helper container and hands the consumer a plain
+  `Directory`. Use for seeding, config bundles, and ephemeral builds where the
+  consumer doesn't need writes.
+- **Cache volume** — for per-agent runtime state that doesn't need durable
+  cross-machine storage, prefer `withMountedCache(...)`. The tradeoff is data is
+  local to the engine; the upside is no FUSE, no caps, no bootstrap dance.
+- **Network service** — TigerFS over a Postgres connection string is another
+  no-FUSE escape hatch (consumers connect over TCP and bypass the file layer
+  entirely). Worth it when consumers are SQL-friendly workloads, not file-tools.
+- **FUSE in consumer** — only when persistent, live writes from the consumer
+  must round-trip to ghost.build. Today only `hermes-workspace` does this; new
+  modules should not adopt the pattern without a clear reason.
 
 ## Conventions
 
-- **Atomic commits.** One change per commit. The maintainer is strict
-  about this — bundling unrelated edits will get rolled back.
+- **Atomic commits.** One change per commit. The maintainer is strict about this
+  — bundling unrelated edits will get rolled back.
 - **No idempotent fluff.** `cmd || true`, swallowed errors, "tolerate
-  pre-existing state" patterns are explicitly disliked. Prefer strict
-  failure with a clear error over silent recovery.
-- **Don't speculate, verify.** Before claiming "this won't work because
-  X", actually try X. Tigerfs limitations were misdiagnosed twice this
-  way; binary blobs DO round-trip through `plaintext` apps.
-- **Comments explain *why*, not *what*.** The reader can see what the
-  code does. They can't see why a mount-bind was chosen over a
-  cache-volume, or why `tigerfs migrate` (not `create`) is the right
-  call against ghost-provisioned DBs.
+  pre-existing state" patterns are explicitly disliked. Prefer strict failure
+  with a clear error over silent recovery.
+- **Don't speculate, verify.** Before claiming "this won't work because X",
+  actually try X. Tigerfs limitations were misdiagnosed twice this way; binary
+  blobs DO round-trip through `plaintext` apps.
+- **Comments explain _why_, not _what_.** The reader can see what the code does.
+  They can't see why a mount-bind was chosen over a cache-volume, or why
+  `tigerfs migrate` (not `create`) is the right call against ghost-provisioned
+  DBs.
 - **No emojis** unless explicitly requested.
 
 ## Common commands
@@ -127,6 +165,5 @@ dagger -m ../<module> call <fn>   # invoke from a sibling repo without `cd`-ing
 ```
 
 `bin/dev` and `bin/run` scripts in sibling repos (`agents/bin/dev`,
-`letta/bin/run`) use the `dagger -m ../dagger/<module>` form so the
-working dir stays at the consumer repo (so `--source=.` still resolves
-correctly).
+`letta/bin/run`) use the `dagger -m ../dagger/<module>` form so the working dir
+stays at the consumer repo (so `--source=.` still resolves correctly).
