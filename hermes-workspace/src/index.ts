@@ -467,7 +467,10 @@ export class HermesWorkspace {
     // shelling out to npm at first launch — that was the original
     // failure mode that left the workspace UI's Skills / Sessions panes
     // disabled.
-    ctr = dag.hermes().install(ctr, HERMES_HOME, HERMES_AGENT_REF)
+    ctr = dag.hermes().install(ctr, {
+      hermesHome: HERMES_HOME,
+      agentRef: HERMES_AGENT_REF,
+    })
     ctr = dag.hermes().withDashboardBundle(ctr)
 
     ctr = ctr
