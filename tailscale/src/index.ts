@@ -23,17 +23,12 @@
  * different tailnets / accounts. Hostname is a snippet argument; pass a
  * `"${TS_HOSTNAME}"`-style string if you want runtime expansion.
  */
-import {
-  dag,
-  Container,
-  object,
-  func,
-} from "@dagger.io/dagger"
+import { dag, Container, object, func } from '@dagger.io/dagger'
 
 const DEFAULT_PROXY_PORT = 1055
-const DEFAULT_STATE_DIR = "/var/tmp/tailscale"
-const DEFAULT_AUTH_KEY_ENV = "TS_AUTHKEY"
-const DEFAULT_NO_PROXY = "127.0.0.1,localhost,::1"
+const DEFAULT_STATE_DIR = '/var/tmp/tailscale'
+const DEFAULT_AUTH_KEY_ENV = 'TS_AUTHKEY'
+const DEFAULT_NO_PROXY = '127.0.0.1,localhost,::1'
 
 @object()
 export class Tailscale {
@@ -55,21 +50,21 @@ export class Tailscale {
      */
     release?: string,
   ): Container {
-    const rel = release?.trim() || "bookworm"
+    const rel = release?.trim() || 'bookworm'
     return ctr.withExec([
-      "bash",
-      "-lc",
+      'bash',
+      '-lc',
       [
-        "set -e",
-        "apt-get update -qq",
-        "DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates curl",
-        "install -d -m 0755 /usr/share/keyrings /etc/apt/sources.list.d",
+        'set -e',
+        'apt-get update -qq',
+        'DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates curl',
+        'install -d -m 0755 /usr/share/keyrings /etc/apt/sources.list.d',
         `curl -fsSL https://pkgs.tailscale.com/stable/debian/${rel}.noarmor.gpg -o /usr/share/keyrings/tailscale-archive-keyring.gpg`,
         `curl -fsSL https://pkgs.tailscale.com/stable/debian/${rel}.tailscale-keyring.list -o /etc/apt/sources.list.d/tailscale.list`,
-        "apt-get update -qq",
-        "DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tailscale",
-        "apt-get clean && rm -rf /var/lib/apt/lists/*",
-      ].join(" && "),
+        'apt-get update -qq',
+        'DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tailscale',
+        'apt-get clean && rm -rf /var/lib/apt/lists/*',
+      ].join(' && '),
     ])
   }
 
@@ -117,9 +112,10 @@ export class Tailscale {
     stateDir?: string,
   ): string {
     const env = authKeyEnv?.trim() || DEFAULT_AUTH_KEY_ENV
-    const port = Number.isInteger(proxyPort) && (proxyPort as number) > 0
-      ? proxyPort
-      : DEFAULT_PROXY_PORT
+    const port =
+      Number.isInteger(proxyPort) && (proxyPort as number) > 0
+        ? proxyPort
+        : DEFAULT_PROXY_PORT
     const dir = stateDir?.trim() || DEFAULT_STATE_DIR
     return [
       `# tailscale userspace daemon (proxy on localhost:${port})`,
@@ -149,7 +145,7 @@ export class Tailscale {
       `  exit 1`,
       `fi`,
       `echo "[tailscale] joined tailnet as ${hostname}"`,
-    ].join("\n")
+    ].join('\n')
   }
 
   /**
@@ -181,7 +177,7 @@ export class Tailscale {
       `  echo "[tailscale] tailscale serve failed; see /tmp/tailscale-serve.log" >&2`,
       `  cat /tmp/tailscale-serve.log >&2 || true`,
       `fi`,
-    ].join("\n")
+    ].join('\n')
   }
 
   /**
@@ -209,9 +205,10 @@ export class Tailscale {
      */
     noProxy?: string,
   ): string {
-    const port = Number.isInteger(proxyPort) && (proxyPort as number) > 0
-      ? proxyPort
-      : DEFAULT_PROXY_PORT
+    const port =
+      Number.isInteger(proxyPort) && (proxyPort as number) > 0
+        ? proxyPort
+        : DEFAULT_PROXY_PORT
     const skip = noProxy?.trim() || DEFAULT_NO_PROXY
     return [
       `# tailscale proxy env (apps -> userspace tailscaled on :${port})`,
@@ -221,7 +218,7 @@ export class Tailscale {
       `export https_proxy="http://localhost:${port}"`,
       `export NO_PROXY="${skip}"`,
       `export no_proxy="${skip}"`,
-    ].join("\n")
+    ].join('\n')
   }
 
   /**
@@ -233,18 +230,18 @@ export class Tailscale {
   @func()
   check(release?: string): Container {
     return this.install(
-      dag.container().from("debian:trixie-slim"),
+      dag.container().from('debian:trixie-slim'),
       release,
     ).withExec([
-      "sh",
-      "-c",
+      'sh',
+      '-c',
       [
         "echo '== tailscale --version =='",
-        "tailscale --version",
-        "echo",
+        'tailscale --version',
+        'echo',
         "echo '== tailscaled --version =='",
-        "tailscaled --version",
-      ].join("\n"),
+        'tailscaled --version',
+      ].join('\n'),
     ])
   }
 }

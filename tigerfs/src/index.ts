@@ -23,11 +23,11 @@ import {
   object,
   func,
   CacheSharingMode,
-} from "@dagger.io/dagger"
+} from '@dagger.io/dagger'
 
-const DEFAULT_INSTALL_DIR = "/usr/local/bin"
-const DEFAULT_INSTALLER_URL = "https://install.tigerfs.io"
-const DEFAULT_GHOST_INSTALLER_URL = "https://install.ghost.build"
+const DEFAULT_INSTALL_DIR = '/usr/local/bin'
+const DEFAULT_INSTALLER_URL = 'https://install.tigerfs.io'
+const DEFAULT_GHOST_INSTALLER_URL = 'https://install.ghost.build'
 
 @object()
 export class Tigerfs {
@@ -56,25 +56,24 @@ export class Tigerfs {
     const ghostUrl =
       ghostInstallerUrl === undefined
         ? DEFAULT_GHOST_INSTALLER_URL
-        : ghostInstallerUrl.trim() || ""
+        : ghostInstallerUrl.trim() || ''
 
-    let result = ctr
-      .withExec([
-        "sh",
-        "-c",
-        `set -e
+    let result = ctr.withExec([
+      'sh',
+      '-c',
+      `set -e
          apt-get update -qq
          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
            ca-certificates curl fuse3
          apt-get clean && rm -rf /var/lib/apt/lists/*
          curl -fsSL ${tigerUrl} | INSTALL_DIR=${dir} sh
          tigerfs version | head -3`,
-      ])
+    ])
 
     if (ghostUrl) {
       result = result.withExec([
-        "sh",
-        "-c",
+        'sh',
+        '-c',
         `set -e
          curl -fsSL ${ghostUrl} | INSTALL_DIR=${dir} sh
          ghost version | head -1`,
@@ -130,7 +129,7 @@ export class Tigerfs {
       `  exit 1`,
       `fi`,
       `echo "[tigerfs] mounted ${connection} at ${mountPath}"`,
-    ].join("\n")
+    ].join('\n')
   }
 
   /**
@@ -145,12 +144,8 @@ export class Tigerfs {
    * No-op if the app directory already exists.
    */
   @func()
-  buildAppSnippet(
-    mountPath: string,
-    appName: string,
-    kind?: string,
-  ): string {
-    const k = kind?.trim() || "markdown"
+  buildAppSnippet(mountPath: string, appName: string, kind?: string): string {
+    const k = kind?.trim() || 'markdown'
     return [
       `# tigerfs app: ${appName} (${k})`,
       `if [ ! -d "${mountPath}/${appName}" ]; then`,
@@ -159,7 +154,7 @@ export class Tigerfs {
       `else`,
       `  echo "[tigerfs] app ${appName} already provisioned at ${mountPath}/${appName}"`,
       `fi`,
-    ].join("\n")
+    ].join('\n')
   }
 
   /**
@@ -201,26 +196,24 @@ export class Tigerfs {
      */
     appKind?: string,
   ): Directory {
-    const kind = appKind?.trim() || "plaintext"
-    const mountPath = "/mnt/tigerfs"
-    const snapshotPath = "/snapshot"
+    const kind = appKind?.trim() || 'plaintext'
+    const mountPath = '/mnt/tigerfs'
+    const snapshotPath = '/snapshot'
     const mount = this.mountSnippet(connection, mountPath)
     const build = this.buildAppSnippet(mountPath, app, kind)
 
     return this.install(
       dag
         .container()
-        .from("debian:trixie-slim")
-        .withMountedCache(
-          "/var/cache/apt",
-          dag.cacheVolume("apt-cache"),
-          { sharing: CacheSharingMode.Locked },
-        ),
+        .from('debian:trixie-slim')
+        .withMountedCache('/var/cache/apt', dag.cacheVolume('apt-cache'), {
+          sharing: CacheSharingMode.Locked,
+        }),
     )
-      .withSecretVariable("GHOST_API_KEY", ghostApiKey)
+      .withSecretVariable('GHOST_API_KEY', ghostApiKey)
       .withExec([
-        "sh",
-        "-c",
+        'sh',
+        '-c',
         `set -e
 ${mount}
 ${build}
@@ -258,25 +251,23 @@ ls -la "${snapshotPath}" | head -20`,
      */
     appName?: string,
   ): Container {
-    const path = mountPath?.trim() || "/mnt/tigerfs-smoke"
-    const app = appName?.trim() || "smoke"
+    const path = mountPath?.trim() || '/mnt/tigerfs-smoke'
+    const app = appName?.trim() || 'smoke'
     const mount = this.mountSnippet(connection, path)
-    const build = this.buildAppSnippet(path, app, "markdown")
+    const build = this.buildAppSnippet(path, app, 'markdown')
 
     return this.install(
       dag
         .container()
-        .from("debian:trixie-slim")
-        .withMountedCache(
-          "/var/cache/apt",
-          dag.cacheVolume("apt-cache"),
-          { sharing: CacheSharingMode.Locked },
-        ),
+        .from('debian:trixie-slim')
+        .withMountedCache('/var/cache/apt', dag.cacheVolume('apt-cache'), {
+          sharing: CacheSharingMode.Locked,
+        }),
     )
-      .withSecretVariable("GHOST_API_KEY", ghostApiKey)
+      .withSecretVariable('GHOST_API_KEY', ghostApiKey)
       .withExec([
-        "sh",
-        "-c",
+        'sh',
+        '-c',
         `set -e
 ${mount}
 ${build}
@@ -298,5 +289,5 @@ ls -la "${path}/${app}/"`,
 }
 
 function slug(s: string): string {
-  return s.replace(/[^a-zA-Z0-9._-]+/g, "-").slice(0, 60) || "tigerfs"
+  return s.replace(/[^a-zA-Z0-9._-]+/g, '-').slice(0, 60) || 'tigerfs'
 }
