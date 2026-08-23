@@ -116,6 +116,7 @@ const project = new Project({
         depNameTemplate: 'dagger/dagger',
         managerFilePatterns: ['/(^|/)dagger\\.json$/'],
         matchStrings: ['"engineVersion":\\s*"v(?<currentValue>[^"]+)"'],
+        extractVersionTemplate: '^v(?<version>.+)$',
       },
     ],
   },
