@@ -32,10 +32,11 @@ Each top-level directory is one Dagger module:
 | `paperclip/`        | build and run `paperclipai/paperclip`; locks `/paperclip` cache volume for embedded PGlite/state; optional userspace Tailscale via `tailscale` |
 | `hermes-workspace/` | hardened build of `outsourc-e/hermes-workspace` v2.1.3, depends on `tigerfs`                                                                   |
 
-Adding a new module: scaffold a sibling directory mirroring the layout below,
-then update `readme.md` so the public index stays accurate. Nothing in
-`.projenrc.ts` needs to change — the root tooling discovers modules by globbing
-`*/dagger.json`.
+Adding a new module: declare it under `dagger.modules` in `.projenrc.ts`, run
+`pnpm projen` to synthesize its `dagger.json`, scaffold the rest of the sibling
+directory mirroring the layout below, then update `readme.md` so the public
+index stays accurate. A module that is not declared has no manifest, and the
+root tasks that glob `*/dagger.json` will not see it.
 
 ## Module layout
 
@@ -44,7 +45,7 @@ first init):
 
 ```
 <module>/
-  dagger.json     # name, engineVersion, sdk { source: "typescript" }, dependencies
+  dagger.json     # synthesized from .projenrc.ts — do not edit
   package.json    # type: module + typescript dep
   tsconfig.json   # paths map @dagger.io/dagger -> ./sdk/index.ts
   src/index.ts    # one @object() class with @func() methods
@@ -58,16 +59,22 @@ the other.
 
 ## Who owns which file
 
-Projen manages the repository root. It does not manage anything inside a module
-directory, and it must not be made to: `dagger develop` regenerates those files
-from the SDK's own templates, so a file written by both tools flips back and
-forth on every run.
+Projen manages the repository root, plus each module's `dagger.json`. It manages
+nothing else inside a module directory, and it must not be made to:
+`dagger develop` regenerates those files from the SDK's own templates, so a file
+written by both tools flips back and forth on every run.
 
-| Owner                                   | Files                                                                                                                                                                                              |
-| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Projen (`.projenrc.ts` → `pnpm projen`) | root `package.json`, `pnpm-workspace.yaml`, `renovate.json5`, `prettier.config.js`, `license`, `CODEOWNERS`, `.editorconfig`, root `.gitignore` / `.gitattributes` / `.prettierignore`, `.projen/` |
-| Dagger (`dagger develop`)               | `<module>/dagger.json`, `<module>/package.json`, `<module>/tsconfig.json`, `<module>/yarn.lock`, `<module>/.gitignore`, `<module>/.gitattributes`, `<module>/sdk/`                                 |
-| You                                     | `<module>/src/**`, `<module>/LICENSE`, docs                                                                                                                                                        |
+The manifest is the exception because Projen writes it in the exact field order
+and formatting the Dagger CLI marshals, so `dagger develop` reads it back and
+leaves it alone. Keep `dagger.engineVersion` in `.projenrc.ts` at or ahead of
+the engine you develop against, or the CLI stamps a newer version in and
+synthesis puts the older one back.
+
+| Owner                                   | Files                                                                                                                                                                                                                                                       |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Projen (`.projenrc.ts` → `pnpm projen`) | root `package.json`, `pnpm-workspace.yaml`, `renovate.json5`, `prettier.config.js`, `license`, `CODEOWNERS`, `.editorconfig`, root `.gitignore` / `.gitattributes` / `.prettierignore`, `.projen/`, `.github/workflows/modules.yml`, `<module>/dagger.json` |
+| Dagger (`dagger develop`)               | `<module>/package.json`, `<module>/tsconfig.json`, `<module>/yarn.lock`, `<module>/.gitignore`, `<module>/.gitattributes`, `<module>/sdk/`                                                                                                                  |
+| You                                     | `<module>/src/**`, `<module>/LICENSE`, docs                                                                                                                                                                                                                 |
 
 The modules are deliberately **not** pnpm workspace packages —
 `pnpm-workspace.yaml` pins `packages: []`. Each one is independently installable
@@ -75,10 +82,12 @@ and the Dagger runtime builds it with Yarn inside its own container, so
 enrolling them would mean a package-manager migration for no gain. The root
 `node_modules/` exists only to run Projen and Prettier.
 
-Because Dagger owns the module manifests, Renovate is configured to skip
-`*/package.json` (its `typescript` pin comes from the SDK) and to track
-`engineVersion` across all six `dagger.json` files through a custom manager,
-grouped into a single "Dagger engine" PR.
+Because the Dagger SDK owns `*/package.json`, Renovate is configured to skip it
+(its `typescript` pin comes from the SDK). It tracks `engineVersion` in
+`.projenrc.ts` rather than in the six manifests — that is the one place the
+repository names an engine — grouped into a single "Dagger engine" PR, and the
+post-upgrade job runs `projen` to propagate it before the checks run. Both rules
+come from the preset's `dagger` option, not from this repository.
 
 ## Root commands
 
