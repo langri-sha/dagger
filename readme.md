@@ -73,8 +73,8 @@ dagger install github.com/langri-sha/dagger/tigerfs@main
 
 Each module stays an independent Dagger module with its own `dagger.json` and
 Yarn-managed manifest — they are not pnpm workspace packages. Projen manages the
-repository root only, and the root `node_modules/` exists just to run the
-tooling.
+repository root and synthesizes every `dagger.json` from `.projenrc.ts`; the
+root `node_modules/` exists just to run the tooling.
 
 ```sh
 pnpm install
@@ -85,5 +85,8 @@ pnpm projen           # re-synthesize root config after editing .projenrc.ts
 
 `dagger develop` regenerates each module's `package.json`, `tsconfig.json`,
 `yarn.lock` and `sdk/`, so those are left out of Projen's and Prettier's scope.
-See [`AGENTS.md`](./AGENTS.md) for the full ownership split and for adding a new
-module.
+The manifests are the other way round: they are synthesized from the `dagger`
+option in `.projenrc.ts`, which is also where the engine version is pinned and
+where Renovate moves it. Declare a new module there rather than writing its
+`dagger.json` by hand. See [`AGENTS.md`](./AGENTS.md) for the full ownership
+split and for adding a new module.
