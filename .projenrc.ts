@@ -34,7 +34,7 @@ const project = new Project({
       '@types/node@24.13.3',
       'prettier@3.9.6',
       'prettier-plugin-ini@1.3.0',
-      'tsx@4.23.12',
+      'tsx@4.23.13',
       // Matches the version the Dagger TypeScript SDK installs into every
       // module, so `check:types` typechecks against the same compiler the
       // runtime uses. Held at ^5 by a Renovate rule below.
