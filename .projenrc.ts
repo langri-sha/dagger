@@ -52,7 +52,7 @@ const project = new Project({
   // written into all of them; Renovate moves it in this file rather than in
   // the manifests.
   dagger: {
-    engineVersion: 'v0.20.8',
+    engineVersion: 'v0.21.9',
     modules: {
       hermes: {},
       // `dagger install` appends, so the order is the order they were added.
