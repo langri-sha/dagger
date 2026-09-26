@@ -35,7 +35,7 @@ const project = new Project({
       '@langri-sha/prettier@^0.4.6',
       '@langri-sha/projen-project@*',
       '@types/node@24.13.6',
-      'prettier@3.9.8',
+      'prettier@3.9.9',
       'prettier-plugin-ini@1.3.0',
       'tsx@4.23.15',
       // Matches the version the Dagger TypeScript SDK installs into every
