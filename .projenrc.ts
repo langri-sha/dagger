@@ -33,7 +33,6 @@ const project = new Project({
 
     devDeps: [
       '@langri-sha/prettier@^0.4.6',
-      '@langri-sha/projen-project@*',
       '@types/node@24.19.0',
       'prettier@3.9.9',
       'tsx@4.23.15',
