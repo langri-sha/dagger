@@ -31,8 +31,7 @@
     "@langri-sha/projen-project": "^0.31.2",
     "prettier": "3.9.9",
     "projen": "0.86.5",
-    "tsx": "4.23.15",
-    "typescript": "5.9.3"
+    "tsx": "4.23.15"
   },
   "packageManager": "pnpm@12.8.1",
   "engines": {
