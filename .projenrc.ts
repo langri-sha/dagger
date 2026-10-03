@@ -9,8 +9,7 @@ const project = new Project({
     authorUrl: 'https://langri-sha.com',
     bugsUrl: 'https://github.com/langri-sha/dagger/issues',
     copyrightYear: '2026',
-    description:
-      'Reusable Dagger TypeScript modules for personal infrastructure',
+    description: 'Reusable Dagger modules for personal infrastructure',
     homepage: 'https://langri-sha.com',
     license: 'MIT',
     licensed: true,
