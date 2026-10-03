@@ -27,24 +27,6 @@
       enabled: false,
     },
     {
-      description: 'Move every Dagger module off one engine release at a time, the way `dagger develop` writes them',
-      groupName: 'Dagger engine',
-      groupSlug: 'dagger-engine',
-      matchDepNames: ['dagger/dagger'],
-    },
-    {
-      description: 'The Dagger SDK writes the module manifests, including the TypeScript pin. Upgrades here are reverted by the next `dagger develop`',
-      matchManagers: ['npm'],
-      matchFileNames: ['*/package.json'],
-      enabled: false,
-    },
-    {
-      description: 'Track the TypeScript major the Dagger SDK installs into the modules, so `check:types` keeps using the runtime compiler',
-      matchManagers: ['npm'],
-      matchPackageNames: ['typescript'],
-      allowedVersions: '^5',
-    },
-    {
       description: 'Update our own packages together',
       groupName: 'langri-sha projen toolchain',
       groupSlug: 'langri-sha-projen',
@@ -92,14 +74,6 @@
         "'(?<depName>@?[\\w-\\/]+)@(?<currentValue>[^']+)'",
       ],
       depTypeTemplate: "{{#if (equals depType 'deps')}}dependencies{{else if (equals depType 'devDeps')}}devDependencies{{else}}peerDependencies{{/if}}",
-    },
-    {
-      customType: 'regex',
-      datasourceTemplate: 'github-releases',
-      depNameTemplate: 'dagger/dagger',
-      managerFilePatterns: ['/(^|/)\\.?projenrc\\.(js|cjs|mjs|ts|mts|cts)$/'],
-      matchStrings: ["engineVersion:\\s*'v(?<currentValue>[^']+)'"],
-      extractVersionTemplate: '^v(?<version>.+)$',
     },
     {
       customType: 'regex',

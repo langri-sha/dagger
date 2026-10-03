@@ -1,23 +1,5 @@
 {
   "tasks": {
-    "check:types": {
-      "name": "check:types",
-      "description": "Typecheck every Dagger module against its generated sdk/",
-      "steps": [
-        {
-          "exec": "status=0; for m in */dagger.json; do [ -e \"$m\" ] || continue; tsc --noEmit -p \"$(dirname \"$m\")\" || status=1; done; exit $status"
-        }
-      ]
-    },
-    "dagger:develop": {
-      "name": "dagger:develop",
-      "description": "Regenerate sdk/ for every Dagger module",
-      "steps": [
-        {
-          "exec": "status=0; for m in */dagger.json; do [ -e \"$m\" ] || continue; (cd \"$(dirname \"$m\")\" && dagger develop) || status=1; done; exit $status"
-        }
-      ]
-    },
     "default": {
       "name": "default",
       "description": "Synthesize project files",

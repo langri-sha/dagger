@@ -21,8 +21,6 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "check:types": "pnpm exec projen check:types",
-    "dagger:develop": "pnpm exec projen dagger:develop",
     "default": "pnpm exec projen default",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

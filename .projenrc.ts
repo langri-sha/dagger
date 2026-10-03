@@ -1,18 +1,5 @@
 import { Project } from '@langri-sha/projen-project'
 
-// Projen owns the repository root, and each module's `dagger.json` through the
-// `dagger` option below. Everything else inside a module directory is written
-// by the Dagger TypeScript SDK — `dagger develop` regenerates `package.json`,
-// `tsconfig.json`, `yarn.lock`, `.gitignore`, `.gitattributes` and `sdk/` from
-// its own templates, so anything Projen synthesized there would be reverted on
-// the next run and re-synthesized on the one after. The manifest is the
-// exception: it is written in the field order the CLI marshals, so
-// `dagger develop` reads it back and leaves it alone.
-//
-// The modules stay out of the pnpm workspace for the same reason: each one is
-// an independently installable Dagger module that the runtime builds with
-// Yarn inside its own container. `packages: []` below is that decision, not
-// an oversight.
 const project = new Project({
   name: 'dagger',
   package: {
@@ -41,26 +28,6 @@ const project = new Project({
   },
   codeowners: {
     '*': '@langri-sha',
-  },
-  // Every module directory holds a `dagger.json` synthesized from here, so a
-  // new module is declared here first. The engine version is declared once and
-  // written into all of them; Renovate moves it in this file rather than in
-  // the manifests.
-  dagger: {
-    engineVersion: 'v0.21.9',
-    modules: {
-      hermes: {},
-      // `dagger install` appends, so the order is the order they were added.
-      'hermes-workspace': {
-        dependencies: ['../tigerfs', '../hermes', '../tailscale'],
-      },
-      'letta-code': {},
-      paperclip: {
-        dependencies: ['../tailscale'],
-      },
-      tailscale: {},
-      tigerfs: {},
-    },
   },
   editorConfig: {},
   lintSynthesized: {},

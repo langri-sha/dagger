@@ -20,15 +20,6 @@ node_modules/
 !/.projen/deps.json
 !/.projen/files.json
 !/package.json
-**/sdk/
-*.tsbuildinfo
-!/.github/workflows/modules.yml
-!/hermes/dagger.json
-!/hermes-workspace/dagger.json
-!/letta-code/dagger.json
-!/paperclip/dagger.json
-!/tailscale/dagger.json
-!/tigerfs/dagger.json
 !/prettier.config.js
 !/.prettierignore
 !/CODEOWNERS
