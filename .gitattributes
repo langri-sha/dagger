@@ -3,21 +3,14 @@
 * text=auto eol=lf
 /.editorconfig linguist-generated
 /.gitattributes linguist-generated
-/.github/workflows/modules.yml linguist-generated
 /.gitignore linguist-generated
 /.prettierignore linguist-generated
 /.projen/** linguist-generated
 /CODEOWNERS linguist-generated
-/hermes-workspace/dagger.json linguist-generated
-/hermes/dagger.json linguist-generated
-/letta-code/dagger.json linguist-generated
 /license linguist-generated
 /package.json linguist-generated
-/paperclip/dagger.json linguist-generated
 /pnpm-lock.yaml linguist-generated
 /pnpm-workspace.yaml linguist-generated
 /prettier.config.js linguist-generated
 /renovate.json5 linguist-generated
-/tailscale/dagger.json linguist-generated
-/tigerfs/dagger.json linguist-generated
 readme text=auto linguist-language=Markdown
