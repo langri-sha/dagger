@@ -2,7 +2,7 @@
   "name": "dagger",
   "version": "0.0.0",
   "private": true,
-  "description": "Reusable Dagger modules for personal infrastructure",
+  "description": "Reusable Dagger modules",
   "homepage": "https://langri-sha.com",
   "bugs": {
     "url": "https://github.com/langri-sha/dagger/issues"
