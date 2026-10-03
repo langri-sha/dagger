@@ -5,7 +5,7 @@
 <h1 align="center">dagger</h1>
 
 <p align="center">
-  Reusable Dagger modules for personal infrastructure.
+  Reusable Dagger modules.
 </p>
 
 ## Status
