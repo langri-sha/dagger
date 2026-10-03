@@ -18,13 +18,7 @@ const project = new Project({
     repository: 'langri-sha/dagger',
     type: 'module',
 
-    devDeps: [
-      '@langri-sha/prettier@^0.4.6',
-      // Matches the version the Dagger TypeScript SDK installs into every
-      // module, so `check:types` typechecks against the same compiler the
-      // runtime uses. Held at ^5 by a rule the `dagger` option contributes.
-      'typescript@5.9.3',
-    ],
+    devDeps: ['@langri-sha/prettier@^0.4.6'],
   },
   codeowners: {
     '*': '@langri-sha',
