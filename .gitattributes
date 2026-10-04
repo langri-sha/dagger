@@ -6,6 +6,7 @@
 /.gitignore linguist-generated
 /.prettierignore linguist-generated
 /.projen/** linguist-generated
+/ci/dagger-module.toml linguist-generated
 /CODEOWNERS linguist-generated
 /license linguist-generated
 /package.json linguist-generated

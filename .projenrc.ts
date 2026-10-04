@@ -25,6 +25,7 @@ const project = new Project({
   dagger: {
     engineVersion: 'v1.0.0-beta.15',
     modules: {
+      ci: {},
       terraform: {},
     },
   },
