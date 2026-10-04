@@ -13,6 +13,21 @@
 Each module is a [Dang](https://docs.dagger.io/reference/sdks/dang) module for
 Dagger 1.0, tagged on its own as `<module>/v<version>`.
 
+### cargo
+
+Checks for Cargo workspaces: `fmt`, `clippy` with its warnings denied, and
+`test`, on the toolchain the root `rust-toolchain.toml` names, and a `lock`
+generator that updates `Cargo.lock` to the manifests. The registry and the build
+output live in cache volumes.
+
+```toml
+[modules.cargo]
+source = "github.com/langri-sha/dagger/cargo@cargo/v0.1.0"
+
+[modules.cargo.settings]
+baseImageAddress = "rust:1-slim" # default
+```
+
 ### ci
 
 Checks for pnpm workspaces that have no official module: a `typescript` check
