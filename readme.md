@@ -13,6 +13,21 @@
 Each module is a [Dang](https://docs.dagger.io/reference/sdks/dang) module for
 Dagger 1.0, tagged on its own as `<module>/v<version>`.
 
+### ci
+
+Checks for pnpm workspaces that have no official module: a `typescript` check
+that runs `tsc --build` over the root `tsconfig.json`, and `projen` and
+`packages` generators that synthesize the projen config and sort and fix the
+package manifests.
+
+```toml
+[modules.ci]
+source = "github.com/langri-sha/dagger/ci@ci/v0.1.0"
+
+[modules.ci.settings]
+baseImageAddress = "node:24-slim" # default
+```
+
 ### terraform
 
 Credential-free checks for the Terraform sources under `terraform/`: `fmt`,
