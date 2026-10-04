@@ -7,6 +7,7 @@
     ".projen/deps.json",
     ".projen/files.json",
     ".projen/tasks.json",
+    "cargo/dagger-module.toml",
     "ci/dagger-module.toml",
     "CODEOWNERS",
     "license",

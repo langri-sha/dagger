@@ -1,0 +1,98 @@
+"""
+Checks for Cargo workspaces: formatting, Clippy lints and tests, run on the
+toolchain `rust-toolchain.toml` names, and a generator for the lock file.
+"""
+type Cargo {
+  """
+  The workspace source, without what building and installing create.
+  """
+  pub source: Directory!
+
+  """
+  The base image to use. Its rustup installs the toolchain the workspace names.
+  """
+  pub baseImageAddress: String!
+
+  new(
+    ws: Workspace!,
+    baseImageAddress: String! = "rust:1-slim",
+  ) {
+    self.source = ws.directory("/", exclude: built)
+    self.baseImageAddress = baseImageAddress
+    self
+  }
+
+  """
+  Check the formatting of every crate.
+  """
+  pub fmt: Void @check {
+    base.withExec(["cargo", "fmt", "--all", "--check"]).sync
+
+    null
+  }
+
+  """
+  Lint every target with Clippy, denying its warnings.
+  """
+  pub clippy: Void @check {
+    base
+      .withExec([
+        "cargo", "clippy", "--locked", "--all-targets",
+        "--", "--deny", "warnings",
+      ])
+      .sync
+
+    null
+  }
+
+  """
+  Run the tests.
+  """
+  pub test: Void @check {
+    base.withExec(["cargo", "test", "--locked"]).sync
+
+    null
+  }
+
+  """
+  Update the lock file to the manifests, leaving the versions it already locks
+  alone.
+  """
+  pub lock: Changeset! @generate {
+    base
+      .withExec(["cargo", "update", "--workspace"])
+      .directory("/src")
+      .filter(include: ["Cargo.lock"])
+      .changes(source.filter(include: ["Cargo.lock"]))
+  }
+
+  """
+  Paths that building and installing create, Cargo's and other toolchains'.
+  """
+  let built: [String!]! = [
+    "**/target",
+    "**/node_modules",
+  ]
+
+  """
+  The workspace on the toolchain it names. The registry and the build output
+  live in caches, which Cargo locks for itself while the checks run side by
+  side.
+
+  rustup refuses to run from any `CARGO_HOME` but the image's, so the toolchain
+  goes in before `CARGO_HOME` moves to its cache — from the toolchain file
+  alone, so that changing the rest of the source keeps it.
+  """
+  let base: Container! {
+    container
+      .from(baseImageAddress)
+      .withFile("/src/rust-toolchain.toml", source.file("rust-toolchain.toml"))
+      .withWorkdir("/src")
+      .withExec(["rustup", "toolchain", "install", "--no-self-update"])
+      .withMountedCache("/cargo", cacheVolume("cargo-home"))
+      .withEnvVariable("CARGO_HOME", "/cargo")
+      .withMountedCache("/target", cacheVolume("cargo-target"))
+      .withEnvVariable("CARGO_TARGET_DIR", "/target")
+      .withDirectory("/src", source)
+  }
+}
