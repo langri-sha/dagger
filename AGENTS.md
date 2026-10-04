@@ -4,19 +4,20 @@ Context for AI coding agents working in this repo.
 
 ## What this is
 
-A repository of reusable Dagger modules for the maintainer's personal
-infrastructure. It is being redone on current Dagger, starting from the modules
-that live in langri-sha/langri-sha.com (`ci` and `terraform`); no modules are
-here yet. The previous TypeScript modules (`hermes`, `hermes-workspace`,
-`letta-code`, `paperclip`, `tailscale`, `tigerfs`) are on the `legacy` branch.
+A repository of reusable Dagger modules: Dang modules for Dagger 1.0, one per
+top-level directory (`terraform/`), each tagged as `<module>/v<version>`. They
+are ported from langri-sha/langri-sha.com, without the defaults that only fit
+it. The previous TypeScript modules (`hermes`, `hermes-workspace`, `letta-code`,
+`paperclip`, `tailscale`, `tigerfs`) are on the `legacy` branch.
 
 ## Who owns which file
 
 Projen manages the repository root: `package.json`, `pnpm-workspace.yaml`,
 `renovate.json5`, `prettier.config.js`, `license`, `CODEOWNERS`,
 `.editorconfig`, `.gitignore`, `.gitattributes`, `.prettierignore` and
-`.projen/`. Edit `.projenrc.ts` and run `pnpm projen` rather than editing them
-by hand.
+`.projen/`, and each module's `dagger-module.toml`, written from the `dagger`
+option with the one engine version they all declare. Edit `.projenrc.ts` and run
+`pnpm projen` rather than editing them by hand.
 
 ## Root commands
 
