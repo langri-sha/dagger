@@ -5,7 +5,7 @@ mocked providers, so plan and apply remain out of reach.
 """
 type Terraform {
   """
-  The Terraform source.
+  The Terraform sources, everything under `terraform/`.
   """
   pub source: Directory!
 
@@ -17,7 +17,7 @@ type Terraform {
 
   new(
     ws: Workspace!,
-    rootModule: String! = "terraform/web",
+    rootModule: String! = "terraform",
   ) {
     self.source = ws.directory(
       "/",
