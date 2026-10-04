@@ -8,11 +8,27 @@
   Reusable Dagger modules.
 </p>
 
-## Status
+## Modules
 
-The repository is being redone on current Dagger, starting from the modules that
-live in [langri-sha.com](https://github.com/langri-sha/langri-sha.com) today.
-Nothing is published here yet.
+Each module is a [Dang](https://docs.dagger.io/reference/sdks/dang) module for
+Dagger 1.0, tagged on its own as `<module>/v<version>`.
+
+### terraform
+
+Credential-free checks for the Terraform sources under `terraform/`: `fmt`,
+`validate` and `test`, and a `lock` generator for the dependency lock file. The
+root module is initialized with `-backend=false`, and its exact
+`required_version` picks the Terraform image.
+
+```toml
+[modules.terraform]
+source = "github.com/langri-sha/dagger/terraform@terraform/v0.1.0"
+
+[modules.terraform.settings]
+rootModule = "terraform/web" # default: terraform
+```
+
+## Legacy
 
 The previous TypeScript modules — `hermes`, `hermes-workspace`, `letta-code`,
 `paperclip`, `tailscale` and `tigerfs` — are on the
@@ -20,7 +36,9 @@ The previous TypeScript modules — `hermes`, `hermes-workspace`, `letta-code`,
 
 ## Working on the repository
 
-Projen manages the repository root.
+Projen manages the repository root and writes each module's `dagger-module.toml`
+from the `dagger` option in `.projenrc.ts`, which also pins the engine version
+for all of them.
 
 ```sh
 pnpm install
