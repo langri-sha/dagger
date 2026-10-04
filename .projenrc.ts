@@ -22,6 +22,12 @@ const project = new Project({
   codeowners: {
     '*': '@langri-sha',
   },
+  dagger: {
+    engineVersion: 'v1.0.0-beta.15',
+    modules: {
+      terraform: {},
+    },
+  },
   editorConfig: {},
   lintSynthesized: {},
   pnpmWorkspace: {
