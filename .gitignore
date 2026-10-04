@@ -20,6 +20,7 @@ node_modules/
 !/.projen/deps.json
 !/.projen/files.json
 !/package.json
+!/terraform/dagger-module.toml
 !/prettier.config.js
 !/.prettierignore
 !/CODEOWNERS
