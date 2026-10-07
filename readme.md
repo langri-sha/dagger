@@ -15,10 +15,8 @@ Dagger 1.0, tagged on its own as `<module>/v<version>`.
 
 ### cargo
 
-Checks for Cargo workspaces: `fmt`, `clippy` with its warnings denied, and
-`test`, on the toolchain the root `rust-toolchain.toml` names, and a `lock`
-generator that updates `Cargo.lock` to the manifests. The registry and the build
-output live in cache volumes.
+Checks a Cargo workspace — formatting, Clippy with warnings as errors, and tests
+— and keeps `Cargo.lock` in step with the manifests.
 
 ```toml
 [modules.cargo]
@@ -30,10 +28,9 @@ baseImageAddress = "rust:1-slim" # default
 
 ### ci
 
-Checks for pnpm workspaces that have no official module: a `typescript` check
-that runs `tsc --build` over the root `tsconfig.json`, and `projen` and
-`packages` generators that synthesize the projen config and sort and fix the
-package manifests.
+Checks for pnpm workspaces that Dagger's official modules don't cover:
+TypeScript type-checking, and generators that re-run projen and tidy the
+`package.json` files.
 
 ```toml
 [modules.ci]
@@ -45,10 +42,9 @@ baseImageAddress = "node:24-slim" # default
 
 ### terraform
 
-Credential-free checks for the Terraform sources under `terraform/`: `fmt`,
-`validate` and `test`, and a `lock` generator for the dependency lock file. The
-root module is initialized with `-backend=false`, and its exact
-`required_version` picks the Terraform image.
+Checks the Terraform under `terraform/` — formatting, validation and tests —
+without needing cloud credentials, and keeps the provider lock file current. It
+runs the Terraform version the root module pins.
 
 ```toml
 [modules.terraform]
