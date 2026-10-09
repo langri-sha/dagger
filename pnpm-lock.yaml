@@ -171,7 +171,7 @@ importers:
         version: 0.4.11(prettier@3.9.9)
       '@langri-sha/projen-project':
         specifier: ^0.33.0
-        version: 0.33.0(prettier@3.9.9)(projen@0.86.5(constructs@10.8.1))(tsx@4.23.15)(typescript@5.9.3)
+        version: 0.33.0(prettier@3.9.9)(projen@0.86.5(constructs@10.8.1))(tsx@4.23.15)
       prettier:
         specifier: 3.9.9
         version: 3.9.9
@@ -682,11 +682,6 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
-  typescript@5.9.3:
-    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
-    engines: {node: '>=14.17'}
-    hasBin: true
-
   unicorn-magic@0.3.0:
     resolution: {integrity: sha512-+QBBXBCvifc56fsbuxZQ6Sic3wqqc3WWaqxs58gvJrcOuN83HGTCwz3oS5phzU9LthRNE9VrJCFCLUgHeeFnfA==}
     engines: {node: '>=18'}
@@ -860,7 +855,7 @@ snapshots:
     optionalDependencies:
       prettier: 3.9.9
 
-  '@langri-sha/projen-project@0.33.0(prettier@3.9.9)(projen@0.86.5(constructs@10.8.1))(tsx@4.23.15)(typescript@5.9.3)':
+  '@langri-sha/projen-project@0.33.0(prettier@3.9.9)(projen@0.86.5(constructs@10.8.1))(tsx@4.23.15)':
     dependencies:
       '@langri-sha/projen-babel': 0.5.17(projen@0.86.5(constructs@10.8.1))
       '@langri-sha/projen-beachball': 0.5.14(projen@0.86.5(constructs@10.8.1))
@@ -890,7 +885,6 @@ snapshots:
     optionalDependencies:
       prettier: 3.9.9
       tsx: 4.23.15
-      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
@@ -1062,9 +1056,6 @@ snapshots:
       esbuild: 0.28.2
     optionalDependencies:
       fsevents: 2.3.3
-
-  typescript@5.9.3:
-    optional: true
 
   unicorn-magic@0.3.0: {}
 
