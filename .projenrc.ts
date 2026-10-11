@@ -90,6 +90,7 @@ const project = new Project({
       },
     ],
   },
+  worktrunk: {},
 })
 
 project.package?.addField('private', true)
