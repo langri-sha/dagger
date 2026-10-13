@@ -15,6 +15,6 @@
 /pnpm-lock.yaml linguist-generated
 /pnpm-workspace.yaml linguist-generated
 /prettier.config.js linguist-generated
-/renovate.json5 linguist-generated
+/renovate.json5 linguist-generated linguist-language=JSON-with-Comments
 /terraform/dagger-module.toml linguist-generated
 readme text=auto linguist-language=Markdown
