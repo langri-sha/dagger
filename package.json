@@ -35,7 +35,7 @@
     "projen": "0.104.1",
     "tsx": "4.23.15"
   },
-  "packageManager": "pnpm@12.11.1",
+  "packageManager": "pnpm@12.11.2",
   "engines": {
     "node": ">= 24.16.0",
     "pnpm": ">= 11.0.0"
