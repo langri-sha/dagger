@@ -19,8 +19,8 @@ option with the one engine version they all declare. Edit `.projenrc.ts` and run
 ## Releases
 
 One repo-wide semver tag, `vX.Y.Z`, on `main` covers every module; consumers pin
-`github.com/langri-sha/dagger/<module>@vX.Y.Z`. Each tag gets a GitHub Release
-with generated notes: `gh release create vX.Y.Z --generate-notes`.
+`github.com/langri-sha/dagger/<module>@vX.Y.Z`. Pushing the tag creates its
+GitHub Release with generated notes (`.github/workflows/release.yml`).
 
 ## Root commands
 
