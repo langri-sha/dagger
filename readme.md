@@ -11,7 +11,7 @@
 ## Modules
 
 Each module is a [Dang](https://docs.dagger.io/reference/sdks/dang) module for
-Dagger 1.0, tagged on its own as `<module>/v<version>`.
+Dagger 1.0, released together under one `v<version>` tag.
 
 ### cargo
 
@@ -20,7 +20,7 @@ Checks a Cargo workspace — formatting, Clippy with warnings as errors, and tes
 
 ```toml
 [modules.cargo]
-source = "github.com/langri-sha/dagger/cargo@cargo/v0.1.0"
+source = "github.com/langri-sha/dagger/cargo@v1.0.0"
 
 [modules.cargo.settings]
 baseImageAddress = "rust:1-slim" # default
@@ -34,7 +34,7 @@ re-run projen and tidy the `package.json` files. Type-checking is in
 
 ```toml
 [modules.ci]
-source = "github.com/langri-sha/dagger/ci@ci/v0.1.0"
+source = "github.com/langri-sha/dagger/ci@v1.0.0"
 
 [modules.ci.settings]
 baseImageAddress = "node:24-slim" # default
@@ -48,7 +48,7 @@ runs the Terraform version the root module pins.
 
 ```toml
 [modules.terraform]
-source = "github.com/langri-sha/dagger/terraform@terraform/v0.1.0"
+source = "github.com/langri-sha/dagger/terraform@v1.0.0"
 
 [modules.terraform.settings]
 rootModule = "terraform/web" # default: terraform
@@ -62,7 +62,7 @@ tsconfig files the root one doesn't reference.
 
 ```toml
 [modules.typescript]
-source = "github.com/langri-sha/dagger/typescript@typescript/v0.1.0"
+source = "github.com/langri-sha/dagger/typescript@v1.0.0"
 
 [modules.typescript.settings]
 baseImageAddress = "node:24-slim" # default
