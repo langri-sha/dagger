@@ -69,6 +69,14 @@ baseImageAddress = "node:24-slim" # default
 projects = ["."] # default
 ```
 
+## Python
+
+Python tooling comes from upstream rather than from here:
+[`github.com/dagger/python/ruff`](https://github.com/dagger/python/tree/main/ruff)
+for linting and formatting, and
+[`github.com/dagger/python/ty`](https://github.com/dagger/python/tree/main/ty)
+for type-checking. Their tags are `v<version>` at the repository root.
+
 ## Legacy
 
 The previous TypeScript modules — `hermes`, `hermes-workspace`, `letta-code`,
