@@ -57,7 +57,8 @@ rootModule = "terraform/web" # default: terraform
 ### typescript
 
 Type-checks a pnpm workspace's project references with `tsc --build`, using the
-TypeScript version the lock file installs.
+TypeScript version the lock file installs. `projects` lists what to build, for
+tsconfig files the root one doesn't reference.
 
 ```toml
 [modules.typescript]
@@ -65,6 +66,7 @@ source = "github.com/langri-sha/dagger/typescript@typescript/v0.1.0"
 
 [modules.typescript.settings]
 baseImageAddress = "node:24-slim" # default
+projects = ["."] # default
 ```
 
 ## Legacy
