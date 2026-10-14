@@ -13,20 +13,28 @@ type Typescript {
   """
   pub baseImageAddress: String!
 
+  """
+  The projects to build, as `tsc --build` takes them: a directory or a tsconfig
+  file, relative to the workspace root.
+  """
+  pub projects: [String!]!
+
   new(
     ws: Workspace!,
     baseImageAddress: String! = "node:24-slim",
+    projects: [String!]! = ["."],
   ) {
     self.source = ws.directory("/", exclude: installed)
     self.baseImageAddress = baseImageAddress
+    self.projects = projects
     self
   }
 
   """
-  Type-check every project reference.
+  Type-check every project and the references they build.
   """
   pub typeCheck: Void @check {
-    base.withExec(["pnpm", "exec", "tsc", "--build", "."]).sync
+    base.withExec(["pnpm", "exec", "tsc", "--build"] + projects).sync
 
     null
   }
