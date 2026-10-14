@@ -1,0 +1,62 @@
+"""
+Type-checks for pnpm workspaces: every TypeScript project reference, built with
+the `tsc` the lock file installs.
+"""
+type Typescript {
+  """
+  The workspace source, without what installing and building create.
+  """
+  pub source: Directory!
+
+  """
+  The base image to use.
+  """
+  pub baseImageAddress: String!
+
+  new(
+    ws: Workspace!,
+    baseImageAddress: String! = "node:24-slim",
+  ) {
+    self.source = ws.directory("/", exclude: installed)
+    self.baseImageAddress = baseImageAddress
+    self
+  }
+
+  """
+  Type-check every project reference.
+  """
+  pub typeCheck: Void @check {
+    base.withExec(["pnpm", "exec", "tsc", "--build", "."]).sync
+
+    null
+  }
+
+  """
+  Paths that installing and building create. A stale build info would let
+  `tsc --build` skip a project and pass without checking it.
+  """
+  let installed: [String!]! = [
+    "**/node_modules",
+    "**/dist",
+    "**/.next",
+    "**/.tsbuild",
+    "**/*.tsbuildinfo",
+  ]
+
+  """
+  The workspace with its dependencies installed from the lock file.
+  """
+  let base: Container! {
+    container
+      .from(baseImageAddress)
+      .withMountedCache("/pnpm/store", cacheVolume("pnpm-store"))
+      .withEnvVariable("npm_config_store_dir", "/pnpm/store")
+      .withEnvVariable("COREPACK_ENABLE_DOWNLOAD_PROMPT", "0")
+      .withEnvVariable("CI", "true")
+      .withEnvVariable("HUSKY", "0")
+      .withExec(["corepack", "enable"])
+      .withDirectory("/src", source)
+      .withWorkdir("/src")
+      .withExec(["pnpm", "install", "--frozen-lockfile"])
+  }
+}

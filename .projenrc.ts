@@ -28,6 +28,7 @@ const project = new Project({
       cargo: {},
       ci: {},
       terraform: {},
+      typescript: {},
     },
   },
   editorConfig: {},
