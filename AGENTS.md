@@ -5,11 +5,7 @@ Context for AI coding agents working in this repo.
 ## What this is
 
 A repository of reusable Dagger modules: Dang modules for Dagger 1.0, one per
-top-level directory (`cargo/`, `ci/`, `terraform/`, `typescript/`), each tagged
-as `<module>/v<version>`. `ci` and `terraform` are ported from
-langri-sha/langri-sha.com, without the defaults that only fit it. The previous
-TypeScript modules (`hermes`, `hermes-workspace`, `letta-code`, `paperclip`,
-`tailscale`, `tigerfs`) are on the `legacy` branch.
+top-level directory (`cargo/`, `ci/`, `terraform/`, `typescript/`).
 
 ## Who owns which file
 
@@ -19,6 +15,12 @@ Projen manages the repository root: `package.json`, `pnpm-workspace.yaml`,
 `.projen/`, and each module's `dagger-module.toml`, written from the `dagger`
 option with the one engine version they all declare. Edit `.projenrc.ts` and run
 `pnpm projen` rather than editing them by hand.
+
+## Releases
+
+One repo-wide semver tag, `vX.Y.Z`, on `main` covers every module; consumers pin
+`github.com/langri-sha/dagger/<module>@vX.Y.Z`. Each tag gets a GitHub Release
+with generated notes: `gh release create vX.Y.Z --generate-notes`.
 
 ## Root commands
 
