@@ -1,5 +1,5 @@
 """
-Workspace checks that have no official module: TypeScript, projen and package
+Workspace generators that have no official module: projen and package
 manifests.
 """
 type Ci {
@@ -20,15 +20,6 @@ type Ci {
     self.source = ws.directory("/", exclude: installed)
     self.baseImageAddress = baseImageAddress
     self
-  }
-
-  """
-  Type-check every project reference.
-  """
-  pub typescript: Void @check {
-    base.withExec(["pnpm", "tsc", "--build", "."]).sync
-
-    null
   }
 
   """

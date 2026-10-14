@@ -28,9 +28,9 @@ baseImageAddress = "rust:1-slim" # default
 
 ### ci
 
-Checks for pnpm workspaces that Dagger's official modules don't cover:
-TypeScript type-checking, and generators that re-run projen and tidy the
-`package.json` files.
+Generators for pnpm workspaces that Dagger's official modules don't cover: they
+re-run projen and tidy the `package.json` files. Type-checking is in
+[typescript](#typescript).
 
 ```toml
 [modules.ci]
