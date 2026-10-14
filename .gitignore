@@ -24,6 +24,7 @@ node_modules/
 !/cargo/dagger-module.toml
 !/ci/dagger-module.toml
 !/terraform/dagger-module.toml
+!/typescript/dagger-module.toml
 !/prettier.config.js
 !/.prettierignore
 !/CODEOWNERS

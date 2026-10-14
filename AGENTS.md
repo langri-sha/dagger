@@ -5,8 +5,8 @@ Context for AI coding agents working in this repo.
 ## What this is
 
 A repository of reusable Dagger modules: Dang modules for Dagger 1.0, one per
-top-level directory (`cargo/`, `ci/`, `terraform/`), each tagged as
-`<module>/v<version>`. `ci` and `terraform` are ported from
+top-level directory (`cargo/`, `ci/`, `terraform/`, `typescript/`), each tagged
+as `<module>/v<version>`. `ci` and `terraform` are ported from
 langri-sha/langri-sha.com, without the defaults that only fit it. The previous
 TypeScript modules (`hermes`, `hermes-workspace`, `letta-code`, `paperclip`,
 `tailscale`, `tigerfs`) are on the `legacy` branch.
