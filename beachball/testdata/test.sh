@@ -29,6 +29,22 @@ fixture() {
   (cd "$dir" && commit -am change)
 }
 
+public_remote=https://github.com/langri-sha/dagger.git
+public_root=5568a8d949e0b3ca615fb6f488c3eb378bc7b072
+
+public_fixture() {
+  local dir=$scratch/$1
+  [[ -d $scratch/public ]] || git clone --quiet --no-checkout "$public_remote" "$scratch/public"
+  git clone --quiet "$scratch/public" "$dir"
+  git -C "$dir" remote set-url origin "$public_remote"
+  git -C "$dir" checkout --quiet -b feature "$public_root"
+  git -C "$dir" branch --quiet -D main
+  git -C "$dir" rm --quiet -r .
+  workspace "$dir"
+  git -C "$dir" add -A
+  (cd "$dir" && commit -m "Add a workspace")
+}
+
 add_change_file() {
   mkdir -p "$1/change"
   printf '{"type":"patch","comment":"Change foo","packageName":"foo","email":"fixture@example.com","dependentChangeType":"patch"}\n' >"$1/change/foo-0000.json"
@@ -87,3 +103,14 @@ merge_pull_request "$scratch/generate"
 (cd "$scratch/generate" && dagger generate -y)
 test "$(find "$scratch/generate/change" -name '*.json' | wc -l)" -eq 1
 grep -q '"packageName": "foo"' "$scratch/generate"/change/*.json
+
+public_fixture public-without-change-file
+fails_with public-without-change-file "Change files are needed"
+
+public_fixture public-with-change-file
+add_change_file "$scratch/public-with-change-file"
+passes public-with-change-file
+if grep -F refs/heads/main "$scratch/public-with-change-file/dagger.lock"; then
+  echo "the remote branch is pinned in dagger.lock" >&2
+  exit 1
+fi
