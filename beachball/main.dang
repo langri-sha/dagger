@@ -1,0 +1,114 @@
+"""
+A change-file check for pnpm workspaces released with Beachball: whether every
+changed package has a change file.
+
+Beachball compares HEAD to a target branch, so this needs the checkout's full
+history, which `actions/checkout` only gives with `fetch-depth: 0`.
+"""
+type Beachball {
+  """
+  The workspace source, without what installing and building create.
+  """
+  pub source: Directory!
+
+  """
+  The base image to use. Beachball runs git, so it has to ship it.
+  """
+  pub baseImageAddress: String!
+
+  """
+  The ref to compare HEAD to, as Beachball's `branch` option takes it.
+  """
+  pub branch: String!
+
+  new(
+    ws: Workspace!,
+    baseImageAddress: String! = "node:24",
+    branch: String! = "origin/main",
+  ) {
+    self.source = ws.directory("/", exclude: installed)
+    self.baseImageAddress = baseImageAddress
+    self.branch = branch
+    self
+  }
+
+  """
+  Check that every changed package has a change file.
+  """
+  pub changeFiles(ws: Workspace!): Void @check {
+    compared(ws)
+      .withExec([
+        "pnpm", "exec", "beachball", "check",
+        "--no-fetch", "--branch", branch,
+      ])
+      .sync
+
+    null
+  }
+
+  """
+  Paths that installing and building create.
+  """
+  let installed: [String!]! = [
+    ".git",
+    "**/node_modules",
+    "**/dist",
+    "**/.next",
+    "**/.tsbuild",
+    "**/*.tsbuildinfo",
+  ]
+
+  """
+  The workspace with its dependencies installed from the lock file.
+  """
+  let base: Container! {
+    container
+      .from(baseImageAddress)
+      .withMountedCache("/pnpm/store", cacheVolume("pnpm-store"))
+      .withEnvVariable("npm_config_store_dir", "/pnpm/store")
+      .withEnvVariable("COREPACK_ENABLE_DOWNLOAD_PROMPT", "0")
+      .withEnvVariable("CI", "true")
+      .withEnvVariable("HUSKY", "0")
+      .withExec(["corepack", "enable"])
+      .withDirectory("/src", source)
+      .withWorkdir("/src")
+      .withExec(["pnpm", "install", "--frozen-lockfile"])
+  }
+
+  """
+  The installed workspace with its git history, once the history is complete.
+  The history is read here, not in the constructor, so that a shallow checkout
+  fails the checks that need it and nothing else.
+
+  The engine hands over HEAD's history, without the checkout's other refs, so
+  `branch` isn't in it. On a pull request's merge commit the first parent is
+  the target branch, and stands in for it with a warning; any other HEAD has
+  nothing to compare against, and fails.
+  """
+  let compared(ws: Workspace!): Container! {
+    let history = ws.git.directory.sync rescue {
+      err: Error => raise "beachball needs the full git history, and this checkout is shallow: set fetch-depth: 0 on the checkout step.\n" + err.message
+    }
+
+    base
+      .withDirectory("/src/.git", history)
+      .withExec(["sh", "-c", resolveBranch, "sh", branch])
+  }
+
+  """
+  Make `$1` resolve as a remote-tracking ref, as Beachball needs it to.
+  """
+  let resolveBranch: String! = """
+    set -e
+    ref=refs/remotes/$1
+    if git rev-parse --verify --quiet "$ref" >/dev/null; then
+      exit 0
+    elif git rev-parse --verify --quiet HEAD^2 >/dev/null; then
+      echo "warning: $1 is not in the checkout, comparing against HEAD^1" >&2
+      git update-ref "$ref" HEAD^1
+    else
+      echo "error: $1 is not in the checkout and HEAD is not a merge commit, so there is nothing to compare against" >&2
+      exit 1
+    fi
+  """
+}

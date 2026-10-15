@@ -21,6 +21,7 @@ node_modules/
 !/.projen/deps.json
 !/.projen/files.json
 !/package.json
+!/beachball/dagger-module.toml
 !/cargo/dagger-module.toml
 !/ci/dagger-module.toml
 !/terraform/dagger-module.toml

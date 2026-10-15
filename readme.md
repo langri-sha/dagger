@@ -13,6 +13,21 @@
 Each module is a [Dang](https://docs.dagger.io/reference/sdks/dang) module for
 Dagger 1.0, released together under one `v<version>` tag.
 
+### beachball
+
+Checks that every changed package in a pnpm workspace has a Beachball change
+file. Beachball compares HEAD to `branch`, so the checkout needs its full
+history: `fetch-depth: 0` in `actions/checkout`.
+
+```toml
+[modules.beachball]
+source = "github.com/langri-sha/dagger/beachball@v1.0.0"
+
+[modules.beachball.settings]
+baseImageAddress = "node:24" # default
+branch = "origin/main" # default
+```
+
 ### cargo
 
 Checks a Cargo workspace — formatting, Clippy with warnings as errors, and tests
