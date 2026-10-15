@@ -1,8 +1,8 @@
 """
-A change-file check for pnpm workspaces released with Beachball: whether every
-changed package has a change file.
+Change-file checks for pnpm workspaces released with Beachball: whether every
+changed package has a change file, and a generator that writes them.
 
-Beachball compares HEAD to a target branch, so this needs the checkout's full
+Beachball compares HEAD to a target branch, so these need the checkout's full
 history, which `actions/checkout` only gives with `fetch-depth: 0`.
 """
 type Beachball {
@@ -44,6 +44,25 @@ type Beachball {
       .sync
 
     null
+  }
+
+  """
+  Write a change file for every changed package that lacks one.
+  """
+  pub change(
+    ws: Workspace!,
+    message: String! = "Update dependencies",
+    type: String! = "patch",
+  ): Changeset! @generate {
+    compared(ws)
+      .withExec([
+        "pnpm", "exec", "beachball", "change",
+        "--no-commit", "--no-fetch", "--yes",
+        "--branch", branch, "--type", type, "--message", message,
+      ])
+      .directory("/src")
+      .filter(include: ["change/**"])
+      .changes(source.filter(include: ["change/**"]))
   }
 
   """

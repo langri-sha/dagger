@@ -16,8 +16,9 @@ Dagger 1.0, released together under one `v<version>` tag.
 ### beachball
 
 Checks that every changed package in a pnpm workspace has a Beachball change
-file. Beachball compares HEAD to `branch`, so the checkout needs its full
-history: `fetch-depth: 0` in `actions/checkout`.
+file, and writes the missing ones with `message` and `type`. Beachball compares
+HEAD to `branch`, so the checkout needs its full history: `fetch-depth: 0` in
+`actions/checkout`.
 
 ```toml
 [modules.beachball]
