@@ -60,6 +60,11 @@ add_package_on_main() {
   (cd "$1" && commit -m "Add bar")
 }
 
+revert_change() {
+  git -C "$1" revert --no-commit HEAD
+  (cd "$1" && commit -m "Revert the change")
+}
+
 merge_pull_request() {
   git -C "$1" checkout --quiet main
   (cd "$1" && git -c user.name=fixture -c user.email=fixture@example.com merge --quiet --no-ff feature -m "Merge pull request")
@@ -115,6 +120,13 @@ add_change_file "$scratch/target-moved"
 add_package_on_main "$scratch/target-moved"
 merge_pull_request "$scratch/target-moved"
 passes_warning target-moved "comparing against HEAD^1"
+
+fixture empty-merge
+revert_change "$scratch/empty-merge"
+merge_pull_request "$scratch/empty-merge"
+passes_warning empty-merge "comparing against HEAD^1"
+(cd "$scratch/empty-merge" && dagger generate -y)
+test ! -e "$scratch/empty-merge/change"
 
 fixture no-merge-commit
 git -C "$scratch/no-merge-commit" checkout --quiet --detach
