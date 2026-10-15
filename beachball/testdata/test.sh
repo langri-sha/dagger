@@ -65,6 +65,20 @@ passes() {
   (cd "$scratch/$name" && dagger check)
 }
 
+passes_warning() {
+  local name=$1 message=$2 output
+  echo "== $name: dagger check passes, warning: $message"
+  output=$(cd "$scratch/$name" && dagger check --progress plain 2>&1) || {
+    echo "$output" >&2
+    return 1
+  }
+  grep -qF "$message" <<<"$output" || {
+    echo "$output" >&2
+    echo "missing: $message" >&2
+    return 1
+  }
+}
+
 fails_with() {
   local name=$1 message=$2 output
   echo "== $name: dagger check fails with: $message"
@@ -86,7 +100,7 @@ fails_with merge-without-change-file "Change files are needed"
 fixture merge-with-change-file
 add_change_file "$scratch/merge-with-change-file"
 merge_pull_request "$scratch/merge-with-change-file"
-passes merge-with-change-file
+passes_warning merge-with-change-file "comparing against HEAD^1"
 
 fixture no-merge-commit
 git -C "$scratch/no-merge-commit" checkout --quiet --detach
