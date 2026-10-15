@@ -52,6 +52,14 @@ add_change_file() {
   (cd "$1" && commit -m "Add a change file")
 }
 
+add_package_on_main() {
+  git -C "$1" checkout --quiet main
+  mkdir -p "$1/packages/bar"
+  printf '{"name":"bar","version":"1.0.0"}\n' >"$1/packages/bar/package.json"
+  git -C "$1" add packages/bar
+  (cd "$1" && commit -m "Add bar")
+}
+
 merge_pull_request() {
   git -C "$1" checkout --quiet main
   (cd "$1" && git -c user.name=fixture -c user.email=fixture@example.com merge --quiet --no-ff feature -m "Merge pull request")
@@ -101,6 +109,12 @@ fixture merge-with-change-file
 add_change_file "$scratch/merge-with-change-file"
 merge_pull_request "$scratch/merge-with-change-file"
 passes_warning merge-with-change-file "comparing against HEAD^1"
+
+fixture target-moved
+add_change_file "$scratch/target-moved"
+add_package_on_main "$scratch/target-moved"
+merge_pull_request "$scratch/target-moved"
+passes_warning target-moved "comparing against HEAD^1"
 
 fixture no-merge-commit
 git -C "$scratch/no-merge-commit" checkout --quiet --detach
