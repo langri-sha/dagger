@@ -17,7 +17,8 @@ type Beachball {
   pub baseImageAddress: String!
 
   """
-  The ref to compare HEAD to, as Beachball's `branch` option takes it.
+  The branch to compare HEAD to, qualified with its remote, as Beachball's
+  `branch` option takes it.
   """
   pub branch: String!
 
@@ -126,25 +127,41 @@ type Beachball {
   }
 
   """
-  The commit on `branch` to compare HEAD to. The history is read here, not in
-  the constructor, so that a shallow checkout fails the functions that need it
-  and nothing else.
+  The commit HEAD forked from on `branch`, looked up on its remote. The lookup
+  skips `dagger.lock`, since a pinned branch would compare against a stale
+  commit. The history is read here, not in the constructor, so that a shallow
+  checkout fails the functions that need it and nothing else.
 
-  The engine hands over HEAD's history, without the checkout's other refs, so
-  `branch` isn't in it. On a pull request's merge commit the first parent is
-  the target branch, and stands in for it with a warning; any other HEAD has
-  nothing to compare against, and fails.
+  The checkout's own remote-tracking refs aren't visible to the engine. When
+  the remote can't be fetched, as a private one can't without credentials, a
+  pull request's merge commit has the target branch as its first parent, which
+  stands in for it with a warning; any other HEAD has nothing to compare
+  against, and fails.
   """
   let forkPoint(ws: Workspace!): String! {
-    let parents = ws.git.head.targetCommit.parentShas rescue {
+    let head = ws.git.head
+    let parents = head.targetCommit.parentShas rescue {
       else => raise "beachball needs the full git history, and this checkout is shallow: set fetch-depth: 0 on the checkout step."
     }
 
-    if (parents.length < 2) {
-      raise branch + " is not in the checkout and HEAD is not a merge commit, so there is nothing to compare against."
+    let remote = branch.split("/", limit: 2)
+    if (remote.length < 2) {
+      raise "branch has to name its remote, as in origin/main, and " + branch + " doesn't."
     }
+    let target = head.asRepository
+      .remote(remote[0]!)
+      .repository
+      .branch(remote[1]!, noLock: true)
 
-    print("warning: " + branch + " is not in the checkout, comparing against HEAD^1.")
-    parents[0]!
+    head.commonAncestor(target).commitSHA rescue {
+      err: Error => {
+        if (parents.length < 2) {
+          raise branch + " could not be fetched and HEAD is not a merge commit, so there is nothing to compare against."
+        }
+
+        print("warning: " + branch + " could not be fetched, comparing against HEAD^1.\n" + err.message)
+        parents[0]!
+      }
+    }
   }
 }

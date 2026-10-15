@@ -17,7 +17,10 @@ Dagger 1.0, released together under one `v<version>` tag.
 
 Checks that every changed package in a pnpm workspace has a Beachball change
 file, and writes the missing ones with `message` and `type`. Beachball compares
-HEAD to `branch`, so the checkout needs its full history: `fetch-depth: 0` in
+HEAD to the commit it forked from on `branch`, which the module looks up on
+`branch`'s remote. When that remote can't be fetched, as a private one can't
+without credentials, only a pull request's merge commit can be checked, against
+its first parent. The checkout needs its full history: `fetch-depth: 0` in
 `actions/checkout`.
 
 ```toml
