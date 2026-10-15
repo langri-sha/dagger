@@ -95,39 +95,56 @@ type Beachball {
   }
 
   """
-  The installed workspace with its git history, once the history is complete.
-  The history is read here, not in the constructor, so that a shallow checkout
-  fails the checks that need it and nothing else.
+  The installed workspace on a history of two commits: the one HEAD is
+  compared to, and HEAD's tree on top of it. Beachball's diff against `branch`
+  is then the change under review, and the rest of the checkout's history stays
+  out of the container.
+  """
+  let compared(ws: Workspace!): Container! {
+    let head = ws.git.head
+    let target = head.asRepository.ref(forkPoint(ws))
+    let commit = head.targetCommit
+
+    let history = target
+      .withCommit(
+        commit.changes(against: target.targetCommit),
+        message: commit.message,
+        date: commit.authoredDate,
+        authorName: commit.authorName,
+        authorEmail: commit.authorEmail,
+        committerName: commit.committerName,
+        committerEmail: commit.committerEmail,
+        committerDate: commit.committedDate,
+        allowEmpty: true,
+      )
+      .tree(depth: 2)
+      .directory(".git")
+
+    base
+      .withDirectory("/src/.git", history)
+      .withExec(["git", "update-ref", "refs/remotes/" + branch, target.commitSHA])
+  }
+
+  """
+  The commit on `branch` to compare HEAD to. The history is read here, not in
+  the constructor, so that a shallow checkout fails the functions that need it
+  and nothing else.
 
   The engine hands over HEAD's history, without the checkout's other refs, so
   `branch` isn't in it. On a pull request's merge commit the first parent is
   the target branch, and stands in for it with a warning; any other HEAD has
   nothing to compare against, and fails.
   """
-  let compared(ws: Workspace!): Container! {
-    let history = ws.git.directory.sync rescue {
-      err: Error => raise "beachball needs the full git history, and this checkout is shallow: set fetch-depth: 0 on the checkout step.\n" + err.message
+  let forkPoint(ws: Workspace!): String! {
+    let parents = ws.git.head.targetCommit.parentShas rescue {
+      else => raise "beachball needs the full git history, and this checkout is shallow: set fetch-depth: 0 on the checkout step."
     }
 
-    base
-      .withDirectory("/src/.git", history)
-      .withExec(["sh", "-c", resolveBranch, "sh", branch])
-  }
+    if (parents.length < 2) {
+      raise branch + " is not in the checkout and HEAD is not a merge commit, so there is nothing to compare against."
+    }
 
-  """
-  Make `$1` resolve as a remote-tracking ref, as Beachball needs it to.
-  """
-  let resolveBranch: String! = """
-    set -e
-    ref=refs/remotes/$1
-    if git rev-parse --verify --quiet "$ref" >/dev/null; then
-      exit 0
-    elif git rev-parse --verify --quiet HEAD^2 >/dev/null; then
-      echo "warning: $1 is not in the checkout, comparing against HEAD^1" >&2
-      git update-ref "$ref" HEAD^1
-    else
-      echo "error: $1 is not in the checkout and HEAD is not a merge commit, so there is nothing to compare against" >&2
-      exit 1
-    fi
-  """
+    print("warning: " + branch + " is not in the checkout, comparing against HEAD^1.")
+    parents[0]!
+  }
 }
