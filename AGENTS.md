@@ -28,6 +28,7 @@ GitHub Release with generated notes (`.github/workflows/release.yml`).
 ```sh
 pnpm projen   # synthesize root config; idempotent
 pnpm format   # prettier --write .
+beachball/testdata/test.sh   # run the beachball module on throwaway git fixtures; needs `dagger`
 ```
 
 ## Conventions
