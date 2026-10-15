@@ -28,6 +28,7 @@ with generated notes: `gh release create vX.Y.Z --generate-notes`.
 ```sh
 pnpm projen   # synthesize root config; idempotent
 pnpm format   # prettier --write .
+beachball/testdata/test.sh   # run the beachball module on throwaway git fixtures; needs `dagger`
 ```
 
 ## Conventions
