@@ -10,12 +10,16 @@ commit() {
   git -c user.name=fixture -c user.email=fixture@example.com commit --quiet "$@"
 }
 
+workspace() {
+  mkdir -p "$1/beachball-module"
+  cp -r "$here/workspace/." "$1/"
+  cp "$module/main.dang" "$module/dagger-module.toml" "$1/beachball-module/"
+  printf '[modules.beachball]\nsource = "beachball-module"\n' >"$1/dagger.toml"
+}
+
 fixture() {
   local dir=$scratch/$1
-  mkdir -p "$dir/beachball-module"
-  cp -r "$here/workspace/." "$dir/"
-  cp "$module/main.dang" "$module/dagger-module.toml" "$dir/beachball-module/"
-  printf '[modules.beachball]\nsource = "beachball-module"\n' >"$dir/dagger.toml"
+  workspace "$dir"
   git -C "$dir" init --quiet -b main
   git -C "$dir" add -A
   (cd "$dir" && commit -m base)
