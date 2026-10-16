@@ -23,11 +23,16 @@ type Ci {
   }
 
   """
-  Synthesize the projen configuration.
+  Synthesize the projen configuration and refresh the lock file. Synthesis
+  runs again once its changes are installed, so an updated projen component
+  writes its own output.
   """
   pub projen: Changeset! @generate {
     base
+      .withExec(["pnpm", "projen", "--no-post"])
+      .withExec(["pnpm", "install", "--no-frozen-lockfile"])
       .withExec(["pnpm", "projen"])
+      .withExec(["pnpm", "install", "--no-frozen-lockfile"])
       .directory("/src")
       .filter(exclude: installed)
       .changes(source)

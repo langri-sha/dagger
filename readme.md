@@ -70,6 +70,12 @@ Generators for pnpm workspaces that Dagger's official modules don't cover: they
 re-run projen and tidy the `package.json` files. Type-checking is in
 [typescript](#typescript).
 
+`projen` synthesizes, installs with the lock file unfrozen, and synthesizes
+again, so an updated projen component writes its own output and the lock file
+follows what synthesis changed. Between the steps, corepack switches to a pnpm
+version that synthesis bumped in `packageManager`. Node stays at
+`baseImageAddress`.
+
 ```toml
 [modules.ci]
 source = "github.com/langri-sha/dagger/ci@v1.0.0"
