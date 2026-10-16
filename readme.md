@@ -139,6 +139,14 @@ for linting and formatting, and
 [`github.com/dagger/python/ty`](https://github.com/dagger/python/tree/main/ty)
 for type-checking. Their tags are `v<version>` at the repository root.
 
+[`github.com/dagger/python/uv`](https://github.com/dagger/python/tree/main/uv)
+keeps `uv.lock` current: its `lock` generator runs `uv lock`, and its stale
+check fails on a lock file that `uv lock --check` would reject. It locks only
+projects that already have a `uv.lock`, with the uv its image ships rather than
+the project's. It also audits the locked dependencies as a check. Generators all
+read the same tree, so when projen changes `pyproject.toml`, `uv.lock` follows
+on the next `dagger generate`.
+
 ## Legacy
 
 The previous TypeScript modules — `hermes`, `hermes-workspace`, `letta-code`,
