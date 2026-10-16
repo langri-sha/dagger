@@ -13,6 +13,18 @@
 Each module is a [Dang](https://docs.dagger.io/reference/sdks/dang) module for
 Dagger 1.0, released together under one `v<version>` tag.
 
+### actionlint
+
+Lints the workflows in `.github/workflows` with actionlint, which also checks
+the local actions they use against their `action.yml` and runs shellcheck on
+their `run:` scripts. It reads `.github/actionlint.yaml` when there is one. The
+module's `Dockerfile` pins the actionlint image, and Renovate updates it there.
+
+```toml
+[modules.actionlint]
+source = "github.com/langri-sha/dagger/actionlint@v1.1.0"
+```
+
 ### beachball
 
 Checks that every changed package in a pnpm workspace has a Beachball change
