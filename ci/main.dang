@@ -121,13 +121,19 @@ type Ci {
   }
 
   """
-  What a container changed in the installed workspace.
+  What a container changed in the installed workspace, among the files git
+  would track.
   """
   let changed(ran: Container!): Changeset! {
-    ran
-      .directory("/src")
-      .filter(exclude: installed)
-      .changes(base.directory("/src").filter(exclude: installed))
+    tracked(ran).changes(tracked(base))
+  }
+
+  """
+  A container's workspace without what installing and building create, or
+  what the workspace ignores.
+  """
+  let tracked(ran: Container!): Directory! {
+    ran.directory("/src").filter(exclude: installed, gitignore: true)
   }
 
   """

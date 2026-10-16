@@ -7,3 +7,4 @@ node_modules/
 !/pnpm-workspace.yaml
 !/package.json
 !/stamp.txt
+/synthesized.txt
