@@ -2,8 +2,9 @@
 Change-file checks for pnpm workspaces released with Beachball: whether every
 changed package has a change file, and a generator that writes them.
 
-Beachball compares HEAD to a target branch, so these need the checkout's full
-history, which `actions/checkout` only gives with `fetch-depth: 0`.
+Beachball compares HEAD to its merge base with the target branch. Both come
+from `.merge-base`, which langri-sha/github's merge-base action writes from a
+shallow checkout, so the module never reads the checkout's history.
 """
 type Beachball {
   """
@@ -16,20 +17,12 @@ type Beachball {
   """
   pub baseImageAddress: String!
 
-  """
-  The branch to compare HEAD to, qualified with its remote, as Beachball's
-  `branch` option takes it.
-  """
-  pub branch: String!
-
   new(
     ws: Workspace!,
     baseImageAddress: String! = "node:24",
-    branch: String! = "origin/main",
   ) {
-    self.source = ws.directory("/", exclude: installed)
+    self.source = ws.directory("/", exclude: installed + [handOver])
     self.baseImageAddress = baseImageAddress
-    self.branch = branch
     self
   }
 
@@ -40,7 +33,7 @@ type Beachball {
     compared(ws)
       .withExec([
         "pnpm", "exec", "beachball", "check",
-        "--no-fetch", "--branch", branch,
+        "--no-fetch", "--branch", branch(ws),
       ])
       .sync
 
@@ -59,7 +52,7 @@ type Beachball {
       .withExec([
         "pnpm", "exec", "beachball", "change",
         "--no-commit", "--no-fetch", "--yes",
-        "--branch", branch, "--type", type, "--message", message,
+        "--branch", branch(ws), "--type", type, "--message", message,
       ])
       .directory("/src")
       .filter(include: ["change/**"])
@@ -79,6 +72,13 @@ type Beachball {
   ]
 
   """
+  Where langri-sha/github's merge-base action writes the merge base (`sha`),
+  the base branch (`ref`) and the paths changed since (`changes`, as
+  `git diff --name-status --no-renames -z` prints them).
+  """
+  let handOver: String! = ".merge-base"
+
+  """
   The workspace with its dependencies installed from the lock file.
   """
   let base: Container! {
@@ -96,72 +96,80 @@ type Beachball {
   }
 
   """
-  The installed workspace on a history of two commits: the one HEAD is
-  compared to, and HEAD's tree on top of it. Beachball's diff against `branch`
-  is then the change under review, and the rest of the checkout's history stays
-  out of the container.
+  The installed workspace on a history of two commits, built from the
+  workspace and the changed paths alone.
   """
   let compared(ws: Workspace!): Container! {
-    let head = ws.git.head
-    let target = head.asRepository.ref(forkPoint(ws))
-    let commit = head.targetCommit
-
-    let history = target
-      .withCommit(
-        commit.changes(against: target.targetCommit),
-        message: commit.message,
-        date: commit.authoredDate,
-        authorName: commit.authorName,
-        authorEmail: commit.authorEmail,
-        committerName: commit.committerName,
-        committerEmail: commit.committerEmail,
-        committerDate: commit.committedDate,
-        allowEmpty: true,
-      )
-      .tree(depth: 2)
-      .directory(".git")
-
-    base
-      .withDirectory("/src/.git", history)
-      .withExec(["git", "update-ref", "refs/remotes/" + branch, target.commitSHA])
+    base.withDirectory("/src/.git", history(ws))
   }
 
   """
-  The commit HEAD forked from on `branch`, looked up on its remote. The lookup
-  skips `dagger.lock`, since a pinned branch would compare against a stale
-  commit. The history is read here, not in the constructor, so that a shallow
-  checkout fails the functions that need it and nothing else.
-
-  The checkout's own remote-tracking refs aren't visible to the engine. When
-  the remote can't be fetched, as a private one can't without credentials, a
-  pull request's merge commit has the target branch as its first parent, which
-  stands in for it with a warning; any other HEAD has nothing to compare
-  against, and fails.
+  The `.git` of a repository whose HEAD is the workspace, and whose
+  `refs/remotes/origin/<ref>` is HEAD with each changed path put back: removed
+  if it was added, and otherwise given content that differs from HEAD's.
+  Beachball's diff between the two lists exactly the changed paths, with
+  additions and deletions as such for its change-file filters.
   """
-  let forkPoint(ws: Workspace!): String! {
-    let head = ws.git.head
-    let parents = head.targetCommit.parentShas rescue {
-      else => raise "beachball needs the full git history, and this checkout is shallow: set fetch-depth: 0 on the checkout step."
-    }
+  let history(ws: Workspace!): Directory! {
+    container
+      .from(baseImageAddress)
+      .withDirectory("/src", source)
+      .withDirectory("/merge-base", mergeBase(ws))
+      .withWorkdir("/src")
+      .withExec(["bash", "-c", commitChanges])
+      .directory("/src/.git")
+  }
 
-    let remote = branch.split("/", limit: 2)
-    if (remote.length < 2) {
-      raise "branch has to name its remote, as in origin/main, and " + branch + " doesn't."
-    }
-    let target = head.asRepository
-      .remote(remote[0]!)
-      .repository
-      .branch(remote[1]!, noLock: true)
+  """
+  Commit the workspace in `/src` as HEAD and its changed paths, put back, as
+  the base, from the hand-over in `/merge-base`.
+  """
+  let commitChanges: String! = """
+    set -euo pipefail
+    export GIT_LITERAL_PATHSPECS=1
+    export GIT_AUTHOR_NAME=beachball GIT_AUTHOR_EMAIL=beachball@localhost
+    export GIT_COMMITTER_NAME=beachball GIT_COMMITTER_EMAIL=beachball@localhost
+    sha=$(< /merge-base/sha)
+    ref=$(< /merge-base/ref)
 
-    head.commonAncestor(target).commitSHA rescue {
-      err: Error => {
-        if (parents.length < 2) {
-          raise branch + " could not be fetched and HEAD is not a merge commit, so there is nothing to compare against."
-        }
+    git init --quiet
+    git add --all --force
+    head=$(git write-tree)
 
-        print("warning: " + branch + " could not be fetched, comparing against HEAD^1.\n" + err.message)
-        parents[0]!
-      }
+    while IFS= read -r -d '' status && IFS= read -r -d '' path; do
+      if [[ $status != [AMDT] ]]; then
+        echo "error: $path has status $status in .merge-base/changes, and only A, M, D and T are expected" >&2
+        exit 1
+      fi
+      if ! blob=$(git rev-parse --verify --quiet ":$path"); then
+        printf '100644 %s\t%s\0' "$(git hash-object -w --stdin < /dev/null)" "$path"
+      elif [[ $status == A ]]; then
+        printf '0 %040d\t%s\0' 0 "$path"
+      else
+        printf '100644 %s\t%s\0' "$({ git cat-file blob "$blob"; echo; } | git hash-object -w --stdin)" "$path"
+      fi
+    done < /merge-base/changes | git update-index -z --index-info
+
+    git update-ref "refs/remotes/origin/$ref" "$(git commit-tree "$(git write-tree)" -m "Merge base $sha")"
+    git update-ref HEAD "$(git commit-tree "$head" -p "refs/remotes/origin/$ref" -m HEAD)"
+    git read-tree "$head"
+  """
+
+  """
+  The branch Beachball compares HEAD to.
+  """
+  let branch(ws: Workspace!): String! {
+    "origin/" + mergeBase(ws).file("ref").contents.trimSpace
+  }
+
+  """
+  The merge-base action's hand-over. It's read here, not in the constructor,
+  so that a workspace without it fails the functions that need it and nothing
+  else.
+  """
+  let mergeBase(ws: Workspace!): Directory! {
+    ws.directory("/" + handOver).sync rescue {
+      else => raise "Beachball compares HEAD to the merge base that langri-sha/github's merge-base action writes to " + handOver + ", and this workspace has none: run the action before dagger check."
     }
   }
 }
