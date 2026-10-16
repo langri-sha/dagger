@@ -29,6 +29,11 @@ fixture() {
   git -C "$repo" add -A
   (cd "$repo" && commit -m base)
   git -C "$repo" checkout --quiet -b feature
+}
+
+change_foo() {
+  local repo
+  repo=$(repository "$1")
   echo 'module.exports = 2' >"$repo/packages/foo/index.js"
   (cd "$repo" && commit -am change)
 }
@@ -109,17 +114,20 @@ fails_with() {
 }
 
 fixture merge-without-change-file
+change_foo merge-without-change-file
 merge_pull_request merge-without-change-file
 check_out merge-without-change-file
 fails_with merge-without-change-file "Change files are needed"
 
 fixture merge-with-change-file
+change_foo merge-with-change-file
 add_change_file merge-with-change-file
 merge_pull_request merge-with-change-file
 check_out merge-with-change-file
 passes merge-with-change-file
 
 fixture target-moved
+change_foo target-moved
 add_change_file target-moved
 add_package_on_main target-moved
 merge_pull_request target-moved
@@ -127,6 +135,7 @@ check_out target-moved
 passes target-moved
 
 fixture empty-merge
+change_foo empty-merge
 revert_change empty-merge
 merge_pull_request empty-merge
 check_out empty-merge
@@ -135,11 +144,13 @@ passes empty-merge
 test ! -e "$scratch/empty-merge/change"
 
 fixture no-hand-over
+change_foo no-hand-over
 merge_pull_request no-hand-over
 clone no-hand-over
 fails_with no-hand-over "run the action before dagger check"
 
 fixture generate
+change_foo generate
 merge_pull_request generate
 check_out generate
 (cd "$scratch/generate" && dagger generate -y)
