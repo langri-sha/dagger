@@ -78,6 +78,24 @@ source = "github.com/langri-sha/dagger/ci@v1.0.0"
 baseImageAddress = "node:24-slim" # default
 ```
 
+### next
+
+Builds a Next.js app in a pnpm workspace with the `next` the lock file installs,
+keeping Next's build cache between runs, and returns the build output;
+`dagger check` checks that it builds. It builds on the [typescript](#typescript)
+module's install of the workspace. Install it once per app.
+
+```toml
+[modules.web]
+source = "github.com/langri-sha/dagger/next@v1.1.0"
+
+[modules.web.settings]
+app = "apps/web" # default: .
+baseImageAddress = "node:24-slim" # default
+outDir = "dist" # default: .next
+environment = ["ASSETS_URL=https://assets.example.com"] # default: []
+```
+
 ### terraform
 
 Checks the Terraform under `terraform/` — formatting, validation and tests —
