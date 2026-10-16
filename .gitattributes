@@ -13,6 +13,7 @@
 /ci/dagger-module.toml linguist-generated
 /CODEOWNERS linguist-generated
 /license linguist-generated
+/next/dagger-module.toml linguist-generated
 /package.json linguist-generated
 /pnpm-lock.yaml linguist-generated
 /pnpm-workspace.yaml linguist-generated

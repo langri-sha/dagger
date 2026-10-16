@@ -1,0 +1,78 @@
+"""
+Builds a Next.js app in a pnpm workspace with the `next` the lock file
+installs, keeping Next's build cache between runs.
+"""
+type Next {
+  """
+  The app's directory, relative to the workspace root.
+  """
+  pub app: String!
+
+  """
+  The directory the build writes, relative to the app: `.next`, or for a static
+  export `out` or the `distDir` it names.
+  """
+  pub outDir: String!
+
+  """
+  Environment variables for the build, as `NAME=value`.
+  """
+  pub environment: [String!]!
+
+  """
+  The workspace with its dependencies installed, from the typescript module.
+  """
+  pub installed: Container!
+
+  new(
+    ws: Workspace!,
+    app: String! = ".",
+    baseImageAddress: String! = "node:24-slim",
+    outDir: String! = ".next",
+    environment: [String!]! = [],
+  ) {
+    self.app = app
+    self.outDir = outDir
+    self.environment = environment
+    self.installed = typescript(ws: ws, baseImageAddress: baseImageAddress).base
+    self
+  }
+
+  """
+  The build output.
+  """
+  pub build: Directory! {
+    built.directory(outDir)
+  }
+
+  """
+  Check that the app builds.
+  """
+  pub builds: Void @check {
+    built.sync
+
+    null
+  }
+
+  """
+  The app, built. Next keeps its cache in `.next/cache` even when it exports to
+  another directory, and clears an export directory before writing it, so the
+  cache volume can't go anywhere else.
+  """
+  let built: Container! {
+    let configured = installed
+      .withWorkdir("/src/" + app)
+      .withMountedCache(".next/cache", cacheVolume("next-" + app))
+      .withEnvVariable("NEXT_TELEMETRY_DISABLED", "1")
+
+    environment
+      .reduce(configured) { ctr, variable =>
+        let pair = variable.split("=", limit: 2)
+        if (pair.length < 2) {
+          raise variable + " is not NAME=value."
+        }
+        ctr.withEnvVariable(pair[0]!, pair[1]!)
+      }
+      .withExec(["pnpm", "exec", "next", "build"])
+  }
+}
