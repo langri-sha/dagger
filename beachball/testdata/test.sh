@@ -38,6 +38,13 @@ change_foo() {
   (cd "$repo" && commit -am change)
 }
 
+delete_foo() {
+  local repo
+  repo=$(repository "$1")
+  git -C "$repo" rm --quiet packages/foo/index.js
+  (cd "$repo" && commit -m "Delete foo's index")
+}
+
 add_change_file() {
   local repo
   repo=$(repository "$1")
@@ -125,6 +132,12 @@ add_change_file merge-with-change-file
 merge_pull_request merge-with-change-file
 check_out merge-with-change-file
 passes merge-with-change-file
+
+fixture deletion-without-change-file
+delete_foo deletion-without-change-file
+merge_pull_request deletion-without-change-file
+check_out deletion-without-change-file
+fails_with deletion-without-change-file "Change files are needed"
 
 fixture target-moved
 change_foo target-moved
