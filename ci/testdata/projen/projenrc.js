@@ -1,4 +1,4 @@
-const { Project, javascript } = require('projen')
+const { Project, TextFile, javascript } = require('projen')
 const stamp = require('stamp')
 
 const project = new Project({ name: 'fixture', projenrcJson: false })
@@ -12,5 +12,10 @@ new javascript.NodePackage(project, {
 project.defaultTask.exec('node projenrc.js')
 
 stamp(project)
+
+new TextFile(project, 'synthesized.txt', {
+  committed: false,
+  lines: ['Synthesized'],
+})
 
 project.synth()
