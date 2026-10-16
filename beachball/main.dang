@@ -17,12 +17,21 @@ type Beachball {
   """
   pub baseImageAddress: String!
 
+  """
+  The email that change files carry, and that changelogs credit each change
+  to. Without it, change files say `email not defined`, which changelogs leave
+  out.
+  """
+  pub authorEmail: String
+
   new(
     ws: Workspace!,
     baseImageAddress: String! = "node:24",
+    authorEmail: String = null,
   ) {
     self.source = ws.directory("/", exclude: installed + [handOver])
     self.baseImageAddress = baseImageAddress
+    self.authorEmail = authorEmail
     self
   }
 
@@ -48,7 +57,13 @@ type Beachball {
     message: String! = "Update dependencies",
     type: String! = "patch",
   ): Changeset! @generate {
-    compared(ws)
+    let repository = if (authorEmail == null) {
+      compared(ws)
+    } else {
+      compared(ws).withExec(["git", "config", "user.email", authorEmail])
+    }
+
+    repository
       .withExec([
         "pnpm", "exec", "beachball", "change",
         "--no-commit", "--no-fetch", "--yes",

@@ -100,6 +100,10 @@ check_out() {
   hand_over "$1"
 }
 
+set_author_email() {
+  printf '\n[modules.beachball.settings]\nauthorEmail = "%s"\n' "$2" >>"$scratch/$1/dagger.toml"
+}
+
 passes() {
   local name=$1
   echo "== $name: dagger check passes"
@@ -169,3 +173,12 @@ check_out generate
 (cd "$scratch/generate" && dagger generate -y)
 test "$(find "$scratch/generate/change" -name '*.json' | wc -l)" -eq 1
 grep -q '"packageName": "foo"' "$scratch/generate"/change/*.json
+grep -q '"email": "email not defined"' "$scratch/generate"/change/*.json
+
+fixture generate-with-author-email
+change_foo generate-with-author-email
+merge_pull_request generate-with-author-email
+check_out generate-with-author-email
+set_author_email generate-with-author-email renovate@example.com
+(cd "$scratch/generate-with-author-email" && dagger generate -y)
+grep -q '"email": "renovate@example.com"' "$scratch/generate-with-author-email"/change/*.json
