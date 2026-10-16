@@ -26,12 +26,17 @@ A change to a pnpm catalog would demand change files from every package that
 uses it: Beachball reads `pnpm-workspace.yaml` at the base, and `.merge-base`
 doesn't carry it.
 
+Change files carry `authorEmail`, which changelogs credit each change to.
+Without it, they say `email not defined`, as the ones langri-sha/github's
+post-upgrade job writes do, and changelogs leave the author out.
+
 ```toml
 [modules.beachball]
 source = "github.com/langri-sha/dagger/beachball@v1.0.0"
 
 [modules.beachball.settings]
 baseImageAddress = "node:24" # default
+authorEmail = "renovate@example.com" # default: unset
 ```
 
 ### cargo
