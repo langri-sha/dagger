@@ -99,6 +99,25 @@ Dagger session. A suite that runs git needs an image that ships it, such as
 dagger call -y ci snapshots
 ```
 
+Every generator reads the same tree. A single `dagger generate` applies nothing
+when two of them change one file, as `projen` and `packages` can both rewrite a
+`package.json`. The post-upgrade job in langri-sha/github's `check.yml` ran its
+fixes in order, each on the previous one's output. To do the same, call the
+fixes and then run one generator at a time, after the merge-base action that
+[beachball](#beachball) needs:
+
+```sh
+dagger call -y ci fix
+dagger call -y ci snapshots
+dagger generate -y ci/projen
+dagger generate -y ci/packages
+dagger generate -y uv
+dagger generate -y beachball/change
+```
+
+Checking for changes, uploading the patch and pushing it with the App token stay
+in GitHub Actions.
+
 ```toml
 [modules.ci]
 source = "github.com/langri-sha/dagger/ci@v1.0.0"
