@@ -52,9 +52,9 @@ type Typescript {
   ]
 
   """
-  The workspace with its dependencies installed from the lock file.
+  The workspace with its dependencies installed from the lock file, in `/src`.
   """
-  let base: Container! {
+  pub base: Container! {
     container
       .from(baseImageAddress)
       .withMountedCache("/pnpm/store", cacheVolume("pnpm-store"))
