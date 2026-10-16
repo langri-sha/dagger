@@ -1,0 +1,13 @@
+name: Check
+
+on: push
+
+jobs:
+  greet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./actions/greet
+        with:
+          name: fixture
+      - run: echo "$GITHUB_SHA"

@@ -1,0 +1,44 @@
+"""
+Lints GitHub Actions workflows with actionlint, running shellcheck on their
+`run:` scripts. The image comes from this module's `Dockerfile`, where Renovate
+updates it.
+"""
+type Actionlint {
+  """
+  The workflows, the local actions they can use, and actionlint's configuration.
+  """
+  pub source: Directory!
+
+  new(ws: Workspace!) {
+    self.source = ws.directory(
+      "/",
+      include: [".github/**", "**/action.yml", "**/action.yaml"],
+      exclude: ["**/node_modules"],
+    )
+    self
+  }
+
+  """
+  Lint every workflow in `.github/workflows`.
+  """
+  pub lint: Void @check {
+    currentModule.source
+      .filter(include: ["Dockerfile"])
+      .dockerBuild
+      .withDirectory("/src", project)
+      .withWorkdir("/src")
+      .withExec(["actionlint"])
+      .sync
+
+    null
+  }
+
+  """
+  The source as actionlint finds a project: a directory with `.git` and
+  `.github/workflows`. Without one it can't resolve local actions or read its
+  configuration.
+  """
+  let project: Directory! {
+    source.withNewDirectory(".git")
+  }
+}
