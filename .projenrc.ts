@@ -29,6 +29,9 @@ const project = new Project({
       beachball: {},
       cargo: {},
       ci: {},
+      next: {
+        dependencies: ['../typescript'],
+      },
       terraform: {},
       typescript: {},
     },

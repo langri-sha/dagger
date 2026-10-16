@@ -25,6 +25,7 @@ node_modules/
 !/beachball/dagger-module.toml
 !/cargo/dagger-module.toml
 !/ci/dagger-module.toml
+!/next/dagger-module.toml
 !/terraform/dagger-module.toml
 !/typescript/dagger-module.toml
 !/prettier.config.js
