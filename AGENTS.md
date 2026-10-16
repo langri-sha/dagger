@@ -5,7 +5,7 @@ Context for AI coding agents working in this repo.
 ## What this is
 
 A repository of reusable Dagger modules: Dang modules for Dagger 1.0, one per
-top-level directory (`beachball/`, `cargo/`, `ci/`, `terraform/`,
+top-level directory (`actionlint/`, `beachball/`, `cargo/`, `ci/`, `terraform/`,
 `typescript/`).
 
 ## Who owns which file
@@ -28,6 +28,7 @@ GitHub Release with generated notes (`.github/workflows/release.yml`).
 ```sh
 pnpm projen   # synthesize root config; idempotent
 pnpm format   # prettier --write .
+actionlint/testdata/test.sh  # lint fixture workflows with the actionlint module; needs `dagger`
 beachball/testdata/test.sh   # run the beachball module on throwaway git fixtures; needs `dagger`
 ```
 
