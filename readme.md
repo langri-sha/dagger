@@ -66,8 +66,9 @@ baseImageAddress = "rust:1-slim" # default
 
 ### ci
 
-Generators for pnpm workspaces that Dagger's official modules don't cover: they
-re-run projen and tidy the `package.json` files. Type-checking is in
+Generators and fixes for pnpm workspaces that Dagger's official modules don't
+cover: the generators re-run projen and tidy the `package.json` files, and `fix`
+applies ESLint and Prettier fixes. Type-checking is in
 [typescript](#typescript).
 
 `projen` synthesizes, installs with the lock file unfrozen, and synthesizes
@@ -75,6 +76,17 @@ again, so an updated projen component writes its own output and the lock file
 follows what synthesis changed. Between the steps, corepack switches to a pnpm
 version that synthesis bumped in `packageManager`. Node stays at
 `baseImageAddress`.
+
+`fix` runs `eslint --fix .` and then `prettier --write .`, each when the
+workspace installs it, at the version its lock file pins. Problems ESLint can't
+fix are left to the [eslint](https://github.com/dagger/eslint) module's check.
+It's a function rather than a generator, since a generator's stale check would
+repeat that check and [prettier](https://github.com/dagger/prettier)'s. Apply
+its changes from the workspace root:
+
+```sh
+dagger call -y ci fix
+```
 
 ```toml
 [modules.ci]

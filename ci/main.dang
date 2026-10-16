@@ -1,6 +1,6 @@
 """
-Workspace generators that have no official module: projen and package
-manifests.
+Workspace generators and fixes that have no official module: projen, package
+manifests, and ESLint and Prettier fixes.
 """
 type Ci {
   """
@@ -36,6 +36,32 @@ type Ci {
       .directory("/src")
       .filter(exclude: installed)
       .changes(source)
+  }
+
+  """
+  Fix what ESLint can, then format with Prettier, each when the workspace
+  installs it. Problems ESLint can't fix are left for a lint check to report.
+  It isn't a generator, whose stale check would repeat the ESLint and Prettier
+  modules' checks.
+  """
+  pub fix: Changeset! {
+    let linted = if (installs("eslint")) {
+      let ran = base.withExec(["pnpm", "exec", "eslint", "--fix", "."], expect: ReturnType.ANY)
+      # ESLint exits 1 when problems it can't fix remain, and 2 when it can't
+      # run.
+      if (ran.exitCode > 1) {
+        raise "eslint --fix failed (exit " + toString(ran.exitCode) + "):\n" + (ran.stderr + "\n" + ran.stdout).trimSpace
+      }
+      ran
+    } else {
+      base
+    }
+
+    if (installs("prettier")) {
+      changed(linted.withExec(["pnpm", "exec", "prettier", "--write", "."]))
+    } else {
+      changed(linted)
+    }
   }
 
   """
@@ -79,5 +105,22 @@ type Ci {
       .withDirectory("/src", source)
       .withWorkdir("/src")
       .withExec(["pnpm", "install", "--frozen-lockfile"])
+  }
+
+  """
+  What a container changed in the installed workspace.
+  """
+  let changed(ran: Container!): Changeset! {
+    ran
+      .directory("/src")
+      .filter(exclude: installed)
+      .changes(base.directory("/src").filter(exclude: installed))
+  }
+
+  """
+  Whether the workspace installs a command with this name.
+  """
+  let installs(command: String!): Boolean! {
+    base.exists("/src/node_modules/.bin/" + command)
   }
 }
