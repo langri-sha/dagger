@@ -1,0 +1,15 @@
+name: Greet
+description: Greet someone
+
+inputs:
+  name:
+    description: Who to greet
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - run: echo "Hello, $NAME"
+      shell: bash
+      env:
+        NAME: ${{ inputs.name }}

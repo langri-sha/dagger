@@ -21,6 +21,7 @@ node_modules/
 !/.projen/deps.json
 !/.projen/files.json
 !/package.json
+!/actionlint/dagger-module.toml
 !/beachball/dagger-module.toml
 !/cargo/dagger-module.toml
 !/ci/dagger-module.toml
