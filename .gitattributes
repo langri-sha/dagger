@@ -21,4 +21,5 @@
 /renovate.json5 linguist-generated linguist-language=JSON-with-Comments
 /terraform/dagger-module.toml linguist-generated
 /typescript/dagger-module.toml linguist-generated
+/vitest/dagger-module.toml linguist-generated
 readme text=auto linguist-language=Markdown
