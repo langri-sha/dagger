@@ -92,8 +92,8 @@ dagger call -y ci fix
 installs Vitest, so it accepts every snapshot that changed. It runs the whole
 suite in the `baseImageAddress` container, without the
 [vitest](https://github.com/dagger/vitest) module's build step, extra files or
-Dagger session. A suite that runs git needs an image that ships it, such as
-`node:24`. Like `fix`, it's a function, applied from the workspace root:
+Dagger session. The default `node:24` ships git for suites that run it; a slim
+image doesn't. Like `fix`, it's a function, applied from the workspace root:
 
 ```sh
 dagger call -y ci snapshots
@@ -123,7 +123,7 @@ in GitHub Actions.
 source = "github.com/langri-sha/dagger/ci@v1.0.0"
 
 [modules.ci.settings]
-baseImageAddress = "node:24-slim" # default
+baseImageAddress = "node:24" # default
 ```
 
 ### next

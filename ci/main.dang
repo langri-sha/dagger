@@ -15,7 +15,7 @@ type Ci {
 
   new(
     ws: Workspace!,
-    baseImageAddress: String! = "node:24-slim",
+    baseImageAddress: String! = "node:24",
   ) {
     self.source = ws.directory("/", exclude: installed)
     self.baseImageAddress = baseImageAddress
