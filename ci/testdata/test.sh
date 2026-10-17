@@ -54,6 +54,13 @@ break_eslint_config() {
   (cd "$dir" && commit -am "Break the ESLint config")
 }
 
+change_greeting() {
+  local dir
+  dir=$(workspace "$1")
+  printf 'export const greet = (name) => `Hi, ${name}!`\n' >"$dir/src/greeting.js"
+  (cd "$dir" && commit -am "Change the greeting")
+}
+
 passes() {
   local name=$1 check=$2
   echo "== $name: $check passes"
@@ -108,6 +115,8 @@ passes upgraded-component ci/projen/stale
 fixture fixed node
 calls fixed fix
 unchanged fixed
+calls fixed snapshots
+unchanged fixed
 
 fixture unfixed node
 add_unfixed_files unfixed
@@ -131,3 +140,12 @@ call_fails_with broken-eslint-config fix "eslint --fix failed (exit 2)"
 fixture without-eslint-and-prettier projen
 calls without-eslint-and-prettier fix
 unchanged without-eslint-and-prettier
+
+fixture changed-greeting node
+change_greeting changed-greeting
+calls changed-greeting snapshots
+grep -qF '"Hi, world!"' "$(workspace changed-greeting)/src/__snapshots__/greeting.test.js.snap"
+
+fixture without-vitest projen
+calls without-vitest snapshots
+unchanged without-vitest
