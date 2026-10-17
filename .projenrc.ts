@@ -34,6 +34,9 @@ const project = new Project({
       },
       terraform: {},
       typescript: {},
+      vitest: {
+        dependencies: ['../typescript'],
+      },
     },
   },
   editorConfig: {},
