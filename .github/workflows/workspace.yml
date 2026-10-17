@@ -16,6 +16,7 @@ jobs:
       id-token: write
     uses: langri-sha/github/.github/workflows/check.yml@v0.30.0
     with:
+      dagger: true
       prettier: true
       projen: true
     secrets: inherit
