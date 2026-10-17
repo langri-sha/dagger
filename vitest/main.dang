@@ -1,0 +1,41 @@
+"""
+Runs a pnpm workspace's Vitest suite with the `vitest` the lock file installs.
+"""
+type Vitest {
+  """
+  The Vitest projects to run, by name, as `--project` takes them. Empty runs
+  every project.
+  """
+  pub projects: [String!]!
+
+  """
+  The workspace with its dependencies installed, from the typescript module.
+  The whole source is there before `pnpm install`, so `prepare` scripts can
+  generate the files the tests import.
+  """
+  pub installed: Container!
+
+  new(
+    ws: Workspace!,
+    baseImageAddress: String! = "node:24",
+    projects: [String!]! = [],
+  ) {
+    self.projects = projects
+    self.installed = typescript(ws: ws, baseImageAddress: baseImageAddress).base
+    self
+  }
+
+  """
+  Run the tests. `pnpm exec` puts `node_modules/.bin` on the PATH for tests
+  that shell out to the workspace's tools.
+  """
+  pub test: Void @check {
+    let selected = projects.reduce(["pnpm", "exec", "vitest", "run"]) { args, project =>
+      args + ["--project", project]
+    }
+
+    installed.withExec(selected).sync
+
+    null
+  }
+}
