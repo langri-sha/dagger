@@ -1,6 +1,6 @@
 """
 Workspace generators and fixes that have no official module: projen, package
-manifests, and ESLint and Prettier fixes.
+manifests, ESLint and Prettier fixes, and Vitest snapshots.
 """
 type Ci {
   """
@@ -61,6 +61,20 @@ type Ci {
       changed(linted.withExec(["pnpm", "exec", "prettier", "--write", "."]))
     } else {
       changed(linted)
+    }
+  }
+
+  """
+  Update Vitest's snapshots, when the workspace installs Vitest. It isn't a
+  generator, whose stale check would rerun the suite next to the Vitest
+  module's tests, and which every `dagger generate` would run to accept any
+  changed snapshot.
+  """
+  pub snapshots: Changeset! {
+    if (installs("vitest")) {
+      changed(base.withExec(["pnpm", "exec", "vitest", "run", "--update", "--passWithNoTests"]))
+    } else {
+      changed(base)
     }
   }
 

@@ -67,9 +67,9 @@ baseImageAddress = "rust:1-slim" # default
 ### ci
 
 Generators and fixes for pnpm workspaces that Dagger's official modules don't
-cover: the generators re-run projen and tidy the `package.json` files, and `fix`
-applies ESLint and Prettier fixes. Type-checking is in
-[typescript](#typescript).
+cover: the generators re-run projen and tidy the `package.json` files, `fix`
+applies ESLint and Prettier fixes, and `snapshots` updates Vitest snapshots.
+Type-checking is in [typescript](#typescript).
 
 `projen` synthesizes, installs with the lock file unfrozen, and synthesizes
 again, so an updated projen component writes its own output and the lock file
@@ -86,6 +86,17 @@ its changes from the workspace root:
 
 ```sh
 dagger call -y ci fix
+```
+
+`snapshots` runs `vitest run --update --passWithNoTests` when the workspace
+installs Vitest, so it accepts every snapshot that changed. It runs the whole
+suite in the `baseImageAddress` container, without the
+[vitest](https://github.com/dagger/vitest) module's build step, extra files or
+Dagger session. A suite that runs git needs an image that ships it, such as
+`node:24`. Like `fix`, it's a function, applied from the workspace root:
+
+```sh
+dagger call -y ci snapshots
 ```
 
 ```toml
