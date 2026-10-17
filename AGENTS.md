@@ -33,6 +33,7 @@ beachball/testdata/test.sh   # run the beachball module on throwaway git fixture
 ci/testdata/test.sh          # run the ci module on throwaway fixtures; needs `dagger`
 next/testdata/test.sh        # build a fixture Next.js app with the next module; needs `dagger`
 vitest/testdata/test.sh      # run fixture Vitest suites with the vitest module; needs `dagger`
+dagger check                 # what CI runs: Prettier, and projen and the package checks through ./ci
 ```
 
 ## Conventions
