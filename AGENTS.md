@@ -6,7 +6,7 @@ Context for AI coding agents working in this repo.
 
 A repository of reusable Dagger modules: Dang modules for Dagger 1.0, one per
 top-level directory (`actionlint/`, `beachball/`, `cargo/`, `ci/`, `next/`,
-`terraform/`, `typescript/`).
+`terraform/`, `typescript/`, `vitest/`).
 
 ## Who owns which file
 
@@ -32,6 +32,7 @@ actionlint/testdata/test.sh  # lint fixture workflows with the actionlint module
 beachball/testdata/test.sh   # run the beachball module on throwaway git fixtures; needs `dagger`
 ci/testdata/test.sh          # run the ci module on throwaway fixtures; needs `dagger`
 next/testdata/test.sh        # build a fixture Next.js app with the next module; needs `dagger`
+vitest/testdata/test.sh      # run fixture Vitest suites with the vitest module; needs `dagger`
 ```
 
 ## Conventions

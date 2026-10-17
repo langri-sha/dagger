@@ -173,6 +173,23 @@ baseImageAddress = "node:24-slim" # default
 projects = ["."] # default
 ```
 
+### vitest
+
+Runs a pnpm workspace's Vitest suite with `pnpm exec vitest run`, using the
+Vitest version the lock file installs, and fails on any failing test. It builds
+on the [typescript](#typescript) module's install of the workspace, so `prepare`
+scripts have generated their files and the workspace's tools are on the `PATH`.
+`projects` picks Vitest projects by name.
+
+```toml
+[modules.vitest]
+source = "github.com/langri-sha/dagger/vitest@v1.2.0"
+
+[modules.vitest.settings]
+baseImageAddress = "node:24" # default
+projects = ["web"] # default: []
+```
+
 ## Python
 
 Python tooling comes from upstream rather than from here:
