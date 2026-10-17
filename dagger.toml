@@ -1,0 +1,15 @@
+ignore = [
+  "**/node_modules",
+  "**/dist",
+  "**/*.tsbuildinfo",
+]
+
+[modules.prettier]
+source = "dagger.io/js/prettier"
+
+[modules.prettier.settings]
+packageManager = "pnpm"
+baseImageAddress = "node:24-slim"
+
+[modules.ci]
+source = "ci"
