@@ -15,12 +15,12 @@ workspace() {
 }
 
 fixture() {
-  local dir
+  local dir settings=${3:-}
   dir=$(workspace "$1")
   mkdir -p "$dir/ci-module"
   cp -r "$here/$2/." "$dir/"
   cp "$module/main.dang" "$module/dagger-module.toml" "$dir/ci-module/"
-  printf '[modules.ci]\nsource = "ci-module"\n' >"$dir/dagger.toml"
+  printf '[modules.ci]\nsource = "ci-module"\n\n[modules.ci.settings]\n%s\n' "$settings" >"$dir/dagger.toml"
   git -C "$dir" init --quiet -b main
   git -C "$dir" add -A
   (cd "$dir" && commit -m base)
@@ -145,6 +145,9 @@ fixture changed-greeting node
 change_greeting changed-greeting
 calls changed-greeting snapshots
 grep -qF '"Hi, world!"' "$(workspace changed-greeting)/src/__snapshots__/greeting.test.js.snap"
+
+fixture image-without-git node 'baseImageAddress = "node:24-slim"'
+call_fails_with image-without-git snapshots "spawnSync git ENOENT"
 
 fixture without-vitest projen
 calls without-vitest snapshots
