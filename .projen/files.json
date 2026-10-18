@@ -15,6 +15,7 @@
     "CODEOWNERS",
     "license",
     "next/dagger-module.toml",
+    "nginx/dagger-module.toml",
     "pnpm-workspace.yaml",
     "prettier.config.js",
     "renovate.json5",
