@@ -43,12 +43,17 @@ passes() {
   local name=$1
   echo "== $name: dagger check passes"
   (cd "$scratch/$name" && dagger check)
+  for function in verify-config verify-responses; do
+    echo "== $name: dagger call site $function passes"
+    (cd "$scratch/$name" && dagger call site "$function")
+  done
 }
 
-fails_with() {
+fails() {
   local name=$1 message=$2 output
-  echo "== $name: dagger check fails with: $message"
-  if output=$(cd "$scratch/$name" && dagger check 2>&1); then
+  shift 2
+  echo "== $name: $* fails with: $message"
+  if output=$(cd "$scratch/$name" && "$@" 2>&1); then
     echo "expected failure" >&2
     return 1
   fi
@@ -59,49 +64,58 @@ fails_with() {
   }
 }
 
+fails_with() {
+  local name=$1 message=$2 function
+  shift 2
+  fails "$name" "$message" dagger check
+  for function in "$@"; do
+    fails "$name" "$message" dagger call site "$function"
+  done
+}
+
 fixture spec
 passes spec
 
 fixture wrong-status
 edit_spec wrong-status 'scenarios[0]["requests"][0]["status"] = 201'
-fails_with wrong-status "GET / answered 200, expected 201"
+fails_with wrong-status "GET / answered 200, expected 201" verify-responses
 
 fixture wrong-body
 edit_spec wrong-body 'scenarios[0]["requests"][1]["body"] = "Gone"'
-fails_with wrong-body "GET /missing answered the body 'This page could not be found\\n', expected 'Gone'"
+fails_with wrong-body "GET /missing answered the body 'This page could not be found\\n', expected 'Gone'" verify-responses
 
 fixture missing-body-text
 edit_spec missing-body-text 'scenarios[0]["requests"][0]["bodyContains"] = ["Goodbye"]'
-fails_with missing-body-text "GET / answered a body without 'Goodbye'"
+fails_with missing-body-text "GET / answered a body without 'Goodbye'" verify-responses
 
 fixture wrong-header
 edit_spec wrong-header 'scenarios[0]["requests"][0]["responseHeaders"] = ["x-robots-tag: all"]'
-fails_with wrong-header "GET / answered x-robots-tag: ['noindex'], expected 'all'"
+fails_with wrong-header "GET / answered x-robots-tag: ['noindex'], expected 'all'" verify-responses
 
 fixture present-header
 edit_spec present-header 'scenarios[0]["requests"][2]["absentHeaders"] = ["x-robots-tag"]'
-fails_with present-header "HEAD / answered with x-robots-tag, which must be absent"
+fails_with present-header "HEAD / answered with x-robots-tag, which must be absent" verify-responses
 
 fixture missing-log-line
 edit_spec missing-log-line 'scenarios[0]["logContains"] = ["GET /never"]'
-fails_with missing-log-line "the log has no 'GET /never'"
+fails_with missing-log-line "the log has no 'GET /never'" verify-responses
 
 fixture unwanted-log-line
 edit_spec unwanted-log-line 'scenarios[0]["logExcludes"] = ["GET /missing"]'
-fails_with unwanted-log-line "the log has 'GET /missing', which must be absent"
+fails_with unwanted-log-line "the log has 'GET /missing', which must be absent" verify-responses
 
 fixture untrusted-upstream
 edit_spec untrusted-upstream 'scenarios[1]["upstreams"][0]["trusted"] = False'
-fails_with untrusted-upstream "GET /proxy/hello?x=1 answered 502, expected 200"
+fails_with untrusted-upstream "GET /proxy/hello?x=1 answered 502, expected 200" verify-responses
 
 fixture invalid-config
 edit_spec invalid-config 'spec["environment"] = ["PORT=notaport"]'
-fails_with invalid-config 'host not found in "notaport" of the "listen" directive'
+fails_with invalid-config 'host not found in "notaport" of the "listen" directive' verify-config
 
 fixture unknown-key
 edit_spec unknown-key 'scenarios[0]["requests"][0]["stauts"] = 200'
-fails_with unknown-key "scenarios[0].requests[0] has an unknown key 'stauts'"
+fails_with unknown-key "scenarios[0].requests[0] has an unknown key 'stauts'" verify-config verify-responses
 
 fixture unnamed-port
 edit_spec unnamed-port 'del spec["port"]'
-fails_with unnamed-port "so the spec has to name the port"
+fails_with unnamed-port "so the spec has to name the port" verify-responses
