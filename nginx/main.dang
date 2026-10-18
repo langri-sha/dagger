@@ -52,6 +52,23 @@ type Nginx {
   that its templates are rendered, with the spec's environment.
   """
   pub config: Void @check {
+    verifyConfig
+  }
+
+  """
+  Run every scenario: the image as a service, and the requests and log lines
+  the scenario expects of it.
+  """
+  pub responses: Void @check {
+    verifyResponses
+  }
+
+  """
+  `config`, as a function that fails `dagger call`, which exits 0 on a failed
+  check. A call takes per-run settings and runs on installs that skip the
+  check.
+  """
+  pub verifyConfig: Void {
     validated.sync
     configured(image, decoded.environment)
       .withExec(["nginx", "-t"], useEntrypoint: true)
@@ -61,10 +78,9 @@ type Nginx {
   }
 
   """
-  Run every scenario: the image as a service, and the requests and log lines
-  the scenario expects of it.
+  `responses`, as a function that fails `dagger call`.
   """
-  pub responses: Void @check {
+  pub verifyResponses: Void {
     validated.sync
     if (decoded.scenarios.length == 0) {
       raise "the spec declares no scenarios"
