@@ -26,6 +26,7 @@ node_modules/
 !/cargo/dagger-module.toml
 !/ci/dagger-module.toml
 !/next/dagger-module.toml
+!/nginx/dagger-module.toml
 !/terraform/dagger-module.toml
 !/typescript/dagger-module.toml
 !/vitest/dagger-module.toml
