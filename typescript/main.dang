@@ -63,8 +63,10 @@ type Typescript {
       .withEnvVariable("CI", "true")
       .withEnvVariable("HUSKY", "0")
       .withExec(["corepack", "enable"])
-      .withDirectory("/src", source)
+      .withFile("/src/package.json", source.file("package.json"))
       .withWorkdir("/src")
+      .withExec(["pnpm", "--version"])
+      .withDirectory("/src", source)
       .withExec(["pnpm", "install", "--frozen-lockfile"])
   }
 }
