@@ -1,0 +1,69 @@
+{
+  "port": 8080,
+  "scenarios": [
+    {
+      "name": "pages",
+      "requests": [
+        {
+          "path": "/",
+          "status": 200,
+          "bodyContains": ["${GREETING}"],
+          "responseHeaders": ["x-robots-tag: noindex"]
+        },
+        {
+          "path": "/missing",
+          "status": 404,
+          "body": "This page could not be found\n"
+        },
+        {
+          "method": "HEAD",
+          "path": "/",
+          "absentHeaders": ["set-cookie"]
+        }
+      ],
+      "logContains": ["GET /missing"],
+      "logExcludes": ["GET /never"]
+    },
+    {
+      "name": "trusted-upstream",
+      "environment": ["UPSTREAM_HOST=upstream"],
+      "resolver": "RESOLVER",
+      "upstreams": [
+        {
+          "hostnames": ["upstream"],
+          "tls": true,
+          "trusted": true,
+          "headers": ["x-upstream: yes", "set-cookie: upstream=1"],
+          "body": "$request_method $request_uri host=$host"
+        }
+      ],
+      "requests": [
+        {
+          "path": "/proxy/hello?x=1",
+          "status": 200,
+          "body": "GET /hello?x=1 host=upstream",
+          "responseHeaders": ["x-upstream: yes"],
+          "absentHeaders": ["set-cookie"]
+        }
+      ]
+    },
+    {
+      "name": "untrusted-upstream",
+      "environment": ["UPSTREAM_HOST=upstream"],
+      "resolver": "RESOLVER",
+      "upstreams": [
+        {
+          "hostnames": ["upstream"],
+          "tls": true,
+          "body": "$request_method $request_uri host=$host"
+        }
+      ],
+      "requests": [
+        {
+          "path": "/proxy/hello",
+          "status": 502
+        }
+      ]
+    }
+  ]
+}
