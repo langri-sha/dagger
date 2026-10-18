@@ -58,7 +58,7 @@ type Typescript {
     container
       .from(baseImageAddress)
       .withMountedCache("/pnpm/store", cacheVolume("pnpm-store"))
-      .withEnvVariable("npm_config_store_dir", "/pnpm/store")
+      .withEnvVariable("PNPM_CONFIG_STORE_DIR", "/pnpm/store")
       .withEnvVariable("COREPACK_ENABLE_DOWNLOAD_PROMPT", "0")
       .withEnvVariable("CI", "true")
       .withEnvVariable("HUSKY", "0")
