@@ -213,6 +213,14 @@ variables = ["BASE_PATH=/pull/7"] # default: []
 `port` can be left out when the image exposes a single port. Paths are sent as
 they are, `..` included, and response headers match ignoring case.
 
+A check run through `dagger call` exits 0 even when it fails. To pass settings
+per run, or to run checks the workspace skips, call `verify-config` and
+`verify-responses`, which fail the command:
+
+```sh
+dagger call web-image --content apps/web/dist --variables BASE_PATH=/pull/7 verify-responses
+```
+
 ### terraform
 
 Checks the Terraform under `terraform/` — formatting, validation and tests —
