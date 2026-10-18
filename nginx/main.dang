@@ -1,0 +1,356 @@
+"""
+Builds an nginx image from a Docker context and checks it as a JSON spec
+declares: `nginx -t`, then requests against the running image, with their
+answers and its log.
+"""
+type Nginx {
+  """
+  The Docker build context, with `content` copied in.
+  """
+  pub context: Directory!
+
+  """
+  The image, built from the context.
+  """
+  pub image: Container!
+
+  """
+  The spec, with the variables substituted.
+  """
+  pub spec: String!
+
+  new(
+    context: Directory!,
+    spec: File!,
+    content: Directory,
+    contentPath: String! = ".",
+    dockerfile: String! = "Dockerfile",
+    buildArgs: [String!]! = [],
+    variables: [String!]! = [],
+  ) {
+    self.context = if (content == null) {
+      context
+    } else {
+      context.withDirectory(contentPath, content!)
+    }
+    self.image = self.context.dockerBuild(
+      dockerfile: dockerfile,
+      buildArgs: buildArgs.map { arg =>
+        let pair = split(arg, "buildArgs")
+        BuildArg(name: pair[0]!, value: pair[1]!)
+      },
+    )
+    self.spec = variables.reduce(spec.contents) { text, variable =>
+      let pair = split(variable, "variables")
+      text.replace("${" + pair[0]! + "}", pair[1]!)
+    }
+    self
+  }
+
+  """
+  Check the configuration with `nginx -t`, through the image's entrypoint so
+  that its templates are rendered, with the spec's environment.
+  """
+  pub config: Void @check {
+    validated.sync
+    configured(image, decoded.environment)
+      .withExec(["nginx", "-t"], useEntrypoint: true)
+      .sync
+
+    null
+  }
+
+  """
+  Run every scenario: the image as a service, and the requests and log lines
+  the scenario expects of it.
+  """
+  pub responses: Void @check {
+    validated.sync
+    if (decoded.scenarios.length == 0) {
+      raise "the spec declares no scenarios"
+    }
+    decoded.scenarios.each { scenario => checked(scenario).sync }
+
+    null
+  }
+
+  """
+  The spec, decoded. Unknown keys are dropped here; `validated` rejects them.
+  """
+  let decoded: NginxSpec! {
+    JSON.decode(spec) :: NginxSpec!
+  }
+
+  """
+  This module's tools: dnsmasq, nginx, openssl, Python and the checker.
+  """
+  let tools: Container! {
+    currentModule.source
+      .filter(include: ["Dockerfile", "nginx_test.py"])
+      .dockerBuild
+  }
+
+  let validated: Container! {
+    tools
+      .withNewFile("/spec.json", spec)
+      .withExec(["python3", "/usr/local/lib/nginx_test.py", "validate", "/spec.json"])
+  }
+
+  """
+  The port the requests go to: the spec's, or the one the image exposes. An
+  image's exposed ports have no order, so with more than one, as an image on
+  `nginx` that adds its own has, the spec has to name it.
+  """
+  let port: Int! {
+    if (decoded.port != null) {
+      decoded.port!
+    } else {
+      if (exposed.length != 1) {
+        raise "the image exposes " + JSON.encode(exposed) + ", so the spec has to name the port"
+      }
+      exposed[0]!
+    }
+  }
+
+  let exposed: [Int!]! {
+    image.exposedPorts.{{port}}.map { exposed => exposed.port }
+  }
+
+  let checked(scenario: NginxScenario!): Container! {
+    tools
+      .withMountedCache("/nginx-test", cacheVolume("nginx-test-logs"))
+      .withServiceBinding("target", target(scenario))
+      .withNewFile("/scenario.json", JSON.encode(scenario))
+      .withExec([
+        "python3", "/usr/local/lib/nginx_test.py", "check", "/scenario.json",
+        "target", JSON.encode(port), logPath(scenario),
+      ])
+  }
+
+  """
+  Where the image's output goes while it serves a scenario. The cache volume
+  is the only way the checker can read a service's output; the context's
+  digest keeps two installs of this module apart.
+  """
+  let logPath(scenario: NginxScenario!): String! {
+    "/nginx-test/" + context.digest + "-" + scenario.name + ".log"
+  }
+
+  """
+  The image serving a scenario, with its stdout and stderr in the log, as
+  `docker logs` would show them. It exposes only the port the requests go to,
+  since Dagger waits for every exposed port before the checker starts, and a
+  base image's `EXPOSE` may name one nothing listens on.
+  """
+  let target(scenario: NginxScenario!): Service! {
+    let withUpstreams = scenario.upstreams.reduce(
+      configured(image, decoded.environment + scenario.environment),
+    ) { ctr, upstream => bound(ctr, upstream) }
+
+    let withResolver = if (scenario.resolver == null) {
+      withUpstreams
+    } else {
+      withUpstreams
+        .withServiceBinding("resolver", resolver(scenario))
+        .withEnvVariable(scenario.resolver!, "resolver")
+    }
+
+    let trusted = scenario.upstreams.filter { upstream => upstream.trusted }
+    let withTrust = if (trusted.length == 0) {
+      withResolver
+    } else {
+      withResolver.withNewFile(
+        scenario.trustStore,
+        image.file(scenario.trustStore).contents + trusted
+          .map { upstream => certificate(upstream).file("upstream.crt").contents }
+          .join(""),
+      )
+    }
+
+    exposed
+      .reduce(withTrust) { ctr, exposed => ctr.withoutExposedPort(exposed) }
+      .withExposedPort(port)
+      .withMountedCache("/nginx-test", cacheVolume("nginx-test-logs"))
+      .asService(
+        args: [
+          "sh", "-c", "log=$1; shift; : >\"$log\"; exec \"$@\" >>\"$log\" 2>&1",
+          "sh", logPath(scenario),
+        ] + image.entrypoint + image.defaultArgs,
+        useEntrypoint: false,
+      )
+  }
+
+  """
+  A DNS server that answers the upstreams' hostnames and forwards the rest,
+  as Docker's embedded DNS does. nginx's `resolver` skips `/etc/hosts`, where
+  Dagger puts service bindings.
+  """
+  let resolver(scenario: NginxScenario!): Service! {
+    scenario.upstreams
+      .reduce(tools.withExposedPort(53)) { ctr, upstream => bound(ctr, upstream) }
+      .asService(args: ["dnsmasq", "--keep-in-foreground", "--log-facility=-"])
+  }
+
+  let bound(ctr: Container!, upstream: NginxUpstream!): Container! {
+    let service = upstreamService(upstream)
+    upstream.hostnames.reduce(ctr) { bound, hostname =>
+      bound.withServiceBinding(hostname, service)
+    }
+  }
+
+  """
+  An nginx that answers every request with the upstream's headers and body.
+  """
+  let upstreamService(upstream: NginxUpstream!): Service! {
+    tools
+      .withDirectory("/certs", certificate(upstream))
+      .withNewFile("/upstream.json", JSON.encode(upstream))
+      .withExposedPort(if (upstream.tls) { 443 } else { 80 })
+      .asService(args: ["python3", "/usr/local/lib/nginx_test.py", "upstream", "/upstream.json"])
+  }
+
+  """
+  A self-signed certificate for the upstream's hostnames, which can stand as
+  its own trust anchor. It outlives the layer cache that keeps it.
+  """
+  let certificate(upstream: NginxUpstream!): Directory! {
+    tools
+      .withExec(["mkdir", "-p", "/certs"])
+      .withExec([
+        "openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-days", "36500",
+        "-subj", "/CN=" + upstream.hostnames[0]!,
+        "-addext", "subjectAltName=" + upstream.hostnames.map { hostname => "DNS:" + hostname }.join(","),
+        "-addext", "basicConstraints=critical,CA:TRUE",
+        "-keyout", "/certs/upstream.key", "-out", "/certs/upstream.crt",
+      ])
+      .directory("/certs")
+  }
+
+  let configured(ctr: Container!, environment: [String!]!): Container! {
+    environment.reduce(ctr) { configured, variable =>
+      let pair = split(variable, "environment")
+      configured.withEnvVariable(pair[0]!, pair[1]!)
+    }
+  }
+
+  let split(entry: String!, setting: String!): [String!]! {
+    let pair = entry.split("=", limit: 2)
+    if (pair.length < 2) {
+      raise setting + " entry " + entry + " is not NAME=value."
+    }
+    pair
+  }
+}
+
+"""
+The checks a spec file declares.
+"""
+type NginxSpec {
+  """
+  Environment variables, as `NAME=value`, for `nginx -t` and every scenario.
+  """
+  pub environment: [String!]! = []
+
+  """
+  The port to send requests to. Defaults to the first one the image exposes.
+  """
+  pub port: Int
+
+  pub scenarios: [NginxScenario!]! = []
+}
+
+"""
+One run of the image and the requests it has to answer.
+"""
+type NginxScenario {
+  pub name: String!
+
+  """
+  Environment variables, as `NAME=value`, on top of the spec's.
+  """
+  pub environment: [String!]! = []
+
+  """
+  An environment variable to set to a DNS server that resolves the
+  upstreams' hostnames, for the configuration's `resolver`.
+  """
+  pub resolver: String
+
+  pub upstreams: [NginxUpstream!]! = []
+
+  """
+  The CA bundle in the image that trusted upstreams' certificates join.
+  """
+  pub trustStore: String! = "/etc/ssl/certs/ca-certificates.crt"
+
+  pub requests: [NginxRequest!]! = []
+
+  """
+  Strings the image's output has to contain.
+  """
+  pub logContains: [String!]! = []
+
+  """
+  Strings the image's output must not contain.
+  """
+  pub logExcludes: [String!]! = []
+}
+
+"""
+An nginx that answers every request with fixed headers and a body, which can
+use nginx variables, under one or more hostnames.
+"""
+type NginxUpstream {
+  pub hostnames: [String!]!
+
+  """
+  Serve HTTPS on 443 with a self-signed certificate for the hostnames,
+  instead of HTTP on 80.
+  """
+  pub tls: Boolean! = false
+
+  """
+  Add the certificate to the image's trust store.
+  """
+  pub trusted: Boolean! = false
+
+  """
+  Response headers, as `name: value`.
+  """
+  pub headers: [String!]! = []
+
+  pub body: String! = ""
+}
+
+"""
+A request and what its answer has to be.
+"""
+type NginxRequest {
+  pub method: String! = "GET"
+
+  """
+  The path, sent as it is, without normalizing `..`.
+  """
+  pub path: String!
+
+  """
+  Request headers, as `name: value`.
+  """
+  pub headers: [String!]! = []
+
+  pub status: Int
+
+  """
+  The exact body.
+  """
+  pub body: String
+
+  pub bodyContains: [String!]! = []
+
+  """
+  Response headers, as `name: value`; the name and value match ignoring case.
+  """
+  pub responseHeaders: [String!]! = []
+
+  pub absentHeaders: [String!]! = []
+}

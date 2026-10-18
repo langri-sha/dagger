@@ -1,0 +1,24 @@
+server {
+  listen ${PORT};
+
+  resolver ${RESOLVER} valid=10s;
+
+  root /usr/share/nginx/html;
+  error_page 404 /404.html;
+
+  location = / {
+    add_header x-robots-tag noindex always;
+    try_files /index.html =404;
+  }
+
+  location ~ "^/proxy/(.*)$" {
+    set $upstream ${UPSTREAM_HOST};
+    proxy_pass https://$upstream/$1$is_args$args;
+
+    proxy_ssl_server_name on;
+    proxy_ssl_verify on;
+    proxy_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
+
+    proxy_hide_header set-cookie;
+  }
+}
