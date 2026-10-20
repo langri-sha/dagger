@@ -51,3 +51,9 @@ passes invite-included
 
 fixture invite-excluded invite
 fails_with invite-excluded "no file exists at"
+
+fixture absolute-include invite 'include = ["/templates/**"]'
+fails_with absolute-include "include /templates/** must be relative to the workspace root"
+
+fixture parent-include invite 'include = ["templates/../../secrets/**"]'
+fails_with parent-include "include templates/../../secrets/** must be relative to the workspace root"
