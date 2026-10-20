@@ -5,7 +5,8 @@ mocked providers, so plan and apply remain out of reach.
 """
 type Terraform {
   """
-  The Terraform sources, everything under `terraform/`.
+  The Terraform sources: everything under `terraform/`, and the paths `include`
+  adds.
   """
   pub source: Directory!
 
@@ -15,16 +16,24 @@ type Terraform {
   """
   pub rootModule: String!
 
+  """
+  Further workspace paths to mount beside `terraform/`, for a root module that
+  reads files from outside it, as globs relative to the workspace root.
+  """
+  pub include: [String!]!
+
   new(
     ws: Workspace!,
     rootModule: String! = "terraform",
+    include: [String!]! = [],
   ) {
     self.source = ws.directory(
       "/",
-      include: ["terraform/**"],
+      include: ["terraform/**"] + include,
       exclude: initialized,
     )
     self.rootModule = rootModule
+    self.include = include
     self
   }
 
