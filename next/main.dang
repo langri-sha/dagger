@@ -20,6 +20,13 @@ type Next {
   pub environment: [String!]!
 
   """
+  The name of the build cache volume, `next-` and this key. Next's cache
+  depends on `basePath`, so installs that build the same app with different base
+  paths need different keys. Defaults to the app.
+  """
+  pub cacheKey: String!
+
+  """
   The workspace with its dependencies installed, from the typescript module.
   """
   pub installed: Container!
@@ -30,10 +37,12 @@ type Next {
     baseImageAddress: String! = "node:24-slim",
     outDir: String! = ".next",
     environment: [String!]! = [],
+    cacheKey: String! = "",
   ) {
     self.app = app
     self.outDir = outDir
     self.environment = environment
+    self.cacheKey = if (cacheKey == "") { app } else { cacheKey }
     self.installed = typescript(ws: ws, baseImageAddress: baseImageAddress).base
     self
   }
@@ -62,7 +71,7 @@ type Next {
   let built: Container! {
     let configured = installed
       .withWorkdir("/src/" + app)
-      .withMountedCache(".next/cache", cacheVolume("next-" + app))
+      .withMountedCache(".next/cache", cacheVolume("next-" + cacheKey))
       .withEnvVariable("NEXT_TELEMETRY_DISABLED", "1")
 
     environment

@@ -8,7 +8,7 @@ scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT
 
 fixture() {
-  local dir=$scratch/$1 environment=$2
+  local dir=$scratch/$1 environment=$2 settings=${3:-}
   mkdir -p "$dir/modules/next" "$dir/modules/typescript"
   cp -r "$here/workspace/." "$dir/"
   git -C "$dir" init --quiet
@@ -22,6 +22,7 @@ source = "modules/next"
 app = "apps/site"
 outDir = "dist"
 environment = [$environment]
+$settings
 EOF
 }
 
@@ -55,10 +56,25 @@ exports() {
   }
 }
 
+mounts_cache() {
+  local name=$1 key=$2 output
+  echo "== $name: the build mounts the cache volume $key"
+  output=$(cd "$scratch/$name" && dagger --progress=plain -vvv check 2>&1)
+  grep -qF "cacheVolume(key: \"$key\"" <<<"$output" || {
+    echo "$output" >&2
+    echo "missing: $key" >&2
+    return 1
+  }
+}
+
 fixture builds '"GREETING=Hello from the fixture"'
 passes builds
+mounts_cache builds next-apps/site
 exports builds index.html "Hello from the fixture"
 test ! -e "$scratch/builds-out/cache"
+
+fixture keyed-cache '"GREETING=Hello from the fixture"' 'cacheKey = "site-docs"'
+mounts_cache keyed-cache next-site-docs
 
 fixture missing-import '"GREETING=Hello from the fixture"'
 printf "import missing from './missing'\n\nexport default function Page() {\n  return <p>{missing}</p>\n}\n" >"$scratch/missing-import/apps/site/app/page.jsx"
