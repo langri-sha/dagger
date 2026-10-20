@@ -1,0 +1,98 @@
+"""
+Pushes a Supabase project's migrations and deploys its Edge Functions with the
+Supabase CLI, which the `Dockerfile` pins and Renovate updates. The project is
+the one `project_id` names in `supabase/config.toml`, and the access token is a
+`Secret` argument, so it never reaches the logs or the cache.
+"""
+type Supabase {
+  """
+  The project's `supabase` directory: its configuration, migrations and
+  functions.
+  """
+  pub source: Directory!
+
+  new(
+    ws: Workspace!,
+    """
+    The directory that holds `supabase`, relative to the workspace root.
+    """
+    project: String! = ".",
+  ) {
+    self.source = ws.directory(project, include: ["supabase/**"])
+    self
+  }
+
+  """
+  Apply the migrations the remote database lacks. A database password, when
+  given, is the one `supabase db push` takes from `SUPABASE_DB_PASSWORD`.
+  """
+  pub migrate(
+    token: Secret!,
+    dbPassword: Secret,
+  ): Void @cache(policy: FunctionCachePolicy.Never) {
+    # @cache(Never) re-runs the function, not its execs. A fresh RUN_ID keeps the
+    # push from replaying out of the layer cache.
+    let authenticated = base
+      .withSecretVariable("SUPABASE_ACCESS_TOKEN", token)
+      .withEnvVariable("RUN_ID", UUID.v4)
+
+    let ctr = if (dbPassword == null) {
+      authenticated
+    } else {
+      authenticated.withSecretVariable("SUPABASE_DB_PASSWORD", dbPassword!)
+    }
+
+    ctr
+      .withExec(["supabase", "--yes", "db", "push", "--project-ref", projectRef])
+      .sync
+
+    null
+  }
+
+  """
+  Deploy every function in `supabase/functions`. The CLI bundles them on
+  Supabase's side with `--use-api`, as the container has no Docker.
+  """
+  pub deploy(token: Secret!): Void @cache(policy: FunctionCachePolicy.Never) {
+    # As in migrate, RUN_ID keeps the deploy out of the layer cache.
+    base
+      .withSecretVariable("SUPABASE_ACCESS_TOKEN", token)
+      .withEnvVariable("RUN_ID", UUID.v4)
+      .withExec([
+        "supabase", "--yes", "functions", "deploy",
+        "--project-ref", projectRef, "--use-api",
+      ])
+      .sync
+
+    null
+  }
+
+  """
+  The project's reference, from the first `project_id` in
+  `supabase/config.toml`, the top-level one.
+  """
+  pub projectRef: String! {
+    let ids = source.search(
+      paths: ["supabase"],
+      globs: ["config.toml"],
+      pattern: `^project_id\s*=\s*"[^"]+"`,
+    ).{{matchedLines}}
+
+    if (ids.length == 0) {
+      raise "supabase/config.toml must set project_id"
+    }
+
+    ids[0].matchedLines.split("\"")[1]!
+  }
+
+  """
+  The source in the CLI image, where `supabase` finds its directory.
+  """
+  let base: Container! {
+    currentModule.source
+      .filter(include: ["Dockerfile"])
+      .dockerBuild
+      .withDirectory("/src", source)
+      .withWorkdir("/src")
+  }
+}
