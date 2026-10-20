@@ -41,7 +41,7 @@ fails_with() {
   }
 }
 
-fixture suite
+fixture suite 'baseImageAddress = "node:24"'
 passes suite
 
 fixture failing-test
@@ -52,5 +52,5 @@ fixture selected-project 'projects = ["generated"]'
 add_failing_test selected-project
 passes selected-project
 
-fixture image-without-git 'baseImageAddress = "node:24-slim"'
-fails_with image-without-git "spawnSync git ENOENT"
+fixture default-image-without-git
+fails_with default-image-without-git "spawnSync git ENOENT"

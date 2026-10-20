@@ -17,7 +17,7 @@ type Vitest {
 
   new(
     ws: Workspace!,
-    baseImageAddress: String! = "node:24",
+    baseImageAddress: String! = "node:24-slim",
     projects: [String!]! = [],
   ) {
     self.projects = projects
