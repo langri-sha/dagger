@@ -147,7 +147,12 @@ app = "apps/web" # default: .
 baseImageAddress = "node:24-slim" # default
 outDir = "dist" # default: .next
 environment = ["ASSETS_URL=https://assets.example.com"] # default: []
+cacheKey = "web-docs" # default: the app
 ```
+
+Next's build cache depends on the app's `basePath`. Installs of the module that
+build one app with different base paths need different `cacheKey`s, so they
+don't share, and keep invalidating, one cache volume.
 
 ### nginx
 
