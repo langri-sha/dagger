@@ -27,6 +27,13 @@ type Next {
   pub cacheKey: String!
 
   """
+  Secret environment variables for the build, as dotenv lines (`NAME=value`,
+  blank lines and `#` comments allowed). The build loads them in the exec that
+  runs `next build`, from a mounted secret, so they stay out of every layer.
+  """
+  pub secretEnvFile: Secret
+
+  """
   The workspace with its dependencies installed, from the typescript module.
   """
   pub installed: Container!
@@ -38,11 +45,13 @@ type Next {
     outDir: String! = ".next",
     environment: [String!]! = [],
     cacheKey: String! = "",
+    secretEnvFile: Secret,
   ) {
     self.app = app
     self.outDir = outDir
     self.environment = environment
     self.cacheKey = if (cacheKey == "") { app } else { cacheKey }
+    self.secretEnvFile = secretEnvFile
     self.installed = typescript(ws: ws, baseImageAddress: baseImageAddress).base
     self
   }
@@ -74,7 +83,7 @@ type Next {
       .withMountedCache(".next/cache", cacheVolume("next-" + cacheKey))
       .withEnvVariable("NEXT_TELEMETRY_DISABLED", "1")
 
-    environment
+    let configuredEnv = environment
       .reduce(configured) { ctr, variable =>
         let pair = variable.split("=", limit: 2)
         if (pair.length < 2) {
@@ -82,6 +91,14 @@ type Next {
         }
         ctr.withEnvVariable(pair[0]!, pair[1]!)
       }
-      .withExec(["pnpm", "exec", "next", "build"])
+
+    if (secretEnvFile == null) {
+      configuredEnv.withExec(["pnpm", "exec", "next", "build"])
+    } else {
+      configuredEnv
+        .withMountedSecret("/run/secrets/build-env", secretEnvFile!)
+        .withFile("/run/build-with-secrets.sh", currentModule.source.file("build-with-secrets.sh"))
+        .withExec(["sh", "/run/build-with-secrets.sh"])
+    }
   }
 }
