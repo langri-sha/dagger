@@ -148,11 +148,22 @@ baseImageAddress = "node:24-slim" # default
 outDir = "dist" # default: .next
 environment = ["ASSETS_URL=https://assets.example.com"] # default: []
 cacheKey = "web-docs" # default: the app
+secretEnvFile = "op://vault/web-build/env" # default: none
 ```
 
 Next's build cache depends on the app's `basePath`. Installs of the module that
 build one app with different base paths need different `cacheKey`s, so they
 don't share, and keep invalidating, one cache volume.
+
+`secretEnvFile` is a `Secret` whose value is dotenv lines: `NAME=value`, with
+blank lines and `#` comments allowed. The setting takes the provider URI
+(`env:`, `file:`, `op://`, `cmd:`), not the lines. The build reads the lines as
+data, not shell, and exports them in the exec that runs `next build`, from a
+mounted secret, so they never reach a layer, and the module logs nothing from
+them. It fails when the secret has no lines or a line isn't `NAME=value`, naming
+the line by number. The secret's value is part of that exec's cache key, so
+changing it rebuilds. What the build itself prints or writes to the output is
+outside the module's control.
 
 ### nginx
 
