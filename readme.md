@@ -315,7 +315,11 @@ project = "apps/web" # default: .
 
 Checks the Terraform under `terraform/` — formatting, validation and tests —
 without needing cloud credentials, and keeps the provider lock file current. It
-runs the Terraform version the root module pins.
+runs the Terraform version the root module pins. A root module that reads files
+outside `terraform/`, say with
+`file("${path.module}/../../templates/invite.html")`, needs them mounted:
+`include` lists their globs relative to the workspace root, and rejects absolute
+paths and `..` segments.
 
 ```toml
 [modules.terraform]
@@ -323,6 +327,7 @@ source = "github.com/langri-sha/dagger/terraform@v1.0.0"
 
 [modules.terraform.settings]
 rootModule = "terraform/web" # default: terraform
+include = ["templates/**"] # default: []
 ```
 
 ### typescript
