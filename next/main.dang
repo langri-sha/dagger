@@ -64,6 +64,57 @@ type Next {
   }
 
   """
+  A slim image that serves the app from Next's standalone output, which the
+  Next config asks for with `output: "standalone"`: the traced server, the
+  static assets and `public`, started with `node server.js`.
+  """
+  pub runtime(
+    """
+    The image to run the server on.
+    """
+    runtimeImageAddress: String! = "node:24-slim",
+    port: Int! = 3000,
+  ): Container! {
+    if (!built.directory(outDir).entries.contains("standalone/")) {
+      raise outDir + "/standalone is missing: set output to \"standalone\" in the Next config."
+    }
+
+    let standalone = built.directory(outDir + "/standalone")
+
+    let servers = standalone
+      .glob("**/server.js")
+      .reject { path => path.contains("node_modules/") }
+    if (servers.isEmpty) {
+      raise outDir + "/standalone has no server.js."
+    }
+
+    let server = servers.reduce(servers[0]!) { shortest, path =>
+      if (path.split("/").length < shortest.split("/").length) { path } else { shortest }
+    }
+    let serverDir = "/app/" + server.trimSuffix("server.js")
+
+    let image = container
+      .from(runtimeImageAddress)
+      .withEnvVariable("NODE_ENV", "production")
+      .withEnvVariable("PORT", toString(port))
+      .withEnvVariable("HOSTNAME", "0.0.0.0")
+      .withDirectory("/app", standalone, owner: "node")
+      .withDirectory(serverDir + outDir + "/static", built.directory(outDir + "/static"), owner: "node")
+
+    let withPublic = if (installed.directory("/src/" + app).entries.contains("public/")) {
+      image.withDirectory(serverDir + "public", installed.directory("/src/" + app + "/public"), owner: "node")
+    } else {
+      image
+    }
+
+    withPublic
+      .withWorkdir(serverDir)
+      .withUser("node")
+      .withExposedPort(port)
+      .withEntrypoint(["node", "server.js"])
+  }
+
+  """
   Check that the app builds.
   """
   pub builds: Void @check {

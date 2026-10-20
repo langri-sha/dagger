@@ -111,6 +111,56 @@ printf '# nothing\n\n' >"$scratch/empty-secret-env.env"
 secret_env_fixture empty-secret-env
 fails_with empty-secret-env "secretEnvFile has no NAME=value lines."
 
+standalone_fixture() {
+  fixture "$1" '"GREETING=Hello from the fixture"' "${2:-}"
+  sed -i 's|outDir = "dist"|outDir = ".next"|' "$scratch/$1/dagger.toml"
+  printf "export default {\n  output: 'standalone',\n}\n" >"$scratch/$1/apps/site/next.config.mjs"
+}
+
+runs_in_image() {
+  local name=$1 script=$2 output
+  shift 2
+  output=$(cd "$scratch/$name" && dagger call site runtime with-exec --args=sh --args=-c --args="$script" stdout)
+  printf '%s' "$output"
+}
+
+image_prints() {
+  local name=$1 expected=$2 script=$3 output
+  echo "== $name: the runtime image prints: $expected"
+  output=$(runs_in_image "$name" "$script")
+  grep -qF "$expected" <<<"$output" || {
+    echo "got: $output" >&2
+    echo "missing: $expected" >&2
+    return 1
+  }
+}
+
+standalone_fixture standalone
+serve_and_fetch() {
+  printf "node server.js >/dev/null 2>&1 & sleep 3; node -e 'fetch(\`http://127.0.0.1:3000%s\`).then(r => r.text()).then(console.log)'" "$1"
+}
+
+image_prints standalone "Hello from the fixture" "$(serve_and_fetch /)"
+image_prints standalone "public file" "$(serve_and_fetch /notice.txt)"
+image_prints standalone "node" "id -un"
+image_prints standalone "no source" "test ! -e /src && echo no source"
+
+printf 'API_TOKEN=s3cret value=with-equals\n' >"$scratch/secret-standalone.env"
+standalone_fixture secret-standalone "secretEnvFile = \"file:$scratch/secret-standalone.env\""
+secret_page secret-standalone
+image_prints secret-standalone "token loaded" "$(serve_and_fetch /)"
+image_prints secret-standalone "no secret" "grep -rqF 's3cret value' /app && echo leaked || echo no secret"
+
+echo "== builds: dagger call runtime fails without a standalone output"
+if output=$(cd "$scratch/builds" && dagger call site runtime 2>&1); then
+  echo "expected failure" >&2
+  exit 1
+fi
+grep -qF 'dist/standalone is missing: set output to "standalone"' <<<"$output" || {
+  echo "$output" >&2
+  exit 1
+}
+
 fixture missing-import '"GREETING=Hello from the fixture"'
 printf "import missing from './missing'\n\nexport default function Page() {\n  return <p>{missing}</p>\n}\n" >"$scratch/missing-import/apps/site/app/page.jsx"
 fails_with missing-import "Module not found"
