@@ -165,6 +165,16 @@ the line by number. The secret's value is part of that exec's cache key, so
 changing it rebuilds. What the build itself prints or writes to the output is
 outside the module's control.
 
+`runtime` returns a slim image that serves a build whose Next config sets
+`output: "standalone"`: the traced server, the static assets and `public`, run
+with `node server.js` as `node` on `node:24-slim`, listening on `PORT` (3000).
+It fails when the build has no standalone output. The image carries nothing of
+`secretEnvFile` except what the build itself writes into the output.
+
+```sh
+dagger call web runtime --runtime-image-address=node:24-slim publish --address=ghcr.io/acme/web:latest
+```
+
 ### nginx
 
 Builds an nginx image from a Docker context and checks it as a JSON spec
