@@ -16,13 +16,6 @@
     "stamp": "file:stamp-1"
   },
   "pnpm": {},
-  "devEngines": {
-    "packageManager": {
-      "name": "pnpm",
-      "version": "12.14.0",
-      "onFail": "ignore"
-    }
-  },
   "main": "lib/index.js",
   "license": "Apache-2.0",
   "publishConfig": {

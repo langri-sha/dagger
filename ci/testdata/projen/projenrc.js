@@ -3,11 +3,13 @@ const stamp = require('stamp')
 
 const project = new Project({ name: 'fixture', projenrcJson: false })
 
-new javascript.NodePackage(project, {
+const pkg = new javascript.NodePackage(project, {
   packageManager: javascript.NodePackageManager.PNPM,
-  pnpmVersion: '12.11.2',
+  addPackageManagerToDevEngines: false,
   devDeps: ['constructs@10.8.1', 'projen@0.104.8', 'stamp@file:stamp-1'],
 })
+
+pkg.addField('packageManager', 'pnpm@12.14.0')
 
 project.defaultTask.exec('node projenrc.js')
 
