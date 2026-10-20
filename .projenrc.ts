@@ -36,6 +36,7 @@ const project = new Project({
       projen: {
         dependencies: ['../typescript'],
       },
+      supabase: {},
       terraform: {},
       typescript: {},
       vitest: {

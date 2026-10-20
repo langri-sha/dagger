@@ -21,6 +21,7 @@
 /prettier.config.js linguist-generated
 /projen/dagger-module.toml linguist-generated
 /renovate.json5 linguist-generated linguist-language=JSON-with-Comments
+/supabase/dagger-module.toml linguist-generated
 /terraform/dagger-module.toml linguist-generated
 /typescript/dagger-module.toml linguist-generated
 /vitest/dagger-module.toml linguist-generated
