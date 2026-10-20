@@ -59,7 +59,10 @@ const project = new Project({
     filename: 'readme.md',
   },
   renovate: {
-    extends: ['github>langri-sha/renovate-config'],
+    extends: [
+      'github>langri-sha/renovate-config',
+      'customManagers:dockerfileVersions',
+    ],
   },
   worktrunk: {},
 })
