@@ -71,11 +71,16 @@ cover: the generators re-run projen and tidy the `package.json` files, `fix`
 applies ESLint and Prettier fixes, and `snapshots` updates Vitest snapshots.
 Type-checking is in [typescript](#typescript).
 
-`projen` synthesizes, installs with the lock file unfrozen, and synthesizes
-again, so an updated projen component writes its own output and the lock file
-follows what synthesis changed. Between the steps, corepack switches to a pnpm
-version that synthesis bumped in `packageManager`. Node stays at
-`baseImageAddress`.
+`projen` runs the steps of the [projen](#projen) module's `synth` on `ci`'s
+install of the workspace. It stays for workspaces that generate `ci/projen`, as
+langri-sha/github's `check.yml` does. A workspace that installs the projen
+module skips it, which drops it from `dagger check` too, so the two don't write
+the same files:
+
+```toml
+[modules.ci.generate]
+skip = ["projen"]
+```
 
 `fix` runs `eslint --fix .` and then `prettier --write .`, each when the
 workspace installs it, at the version its lock file pins. Problems ESLint can't
