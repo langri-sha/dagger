@@ -18,6 +18,7 @@
     "nginx/dagger-module.toml",
     "pnpm-workspace.yaml",
     "prettier.config.js",
+    "projen/dagger-module.toml",
     "renovate.json5",
     "terraform/dagger-module.toml",
     "typescript/dagger-module.toml",
