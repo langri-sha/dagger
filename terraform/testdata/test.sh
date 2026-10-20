@@ -45,3 +45,9 @@ fails_with() {
 
 fixture plain plain
 passes plain
+
+fixture invite-included invite 'include = ["templates/**"]'
+passes invite-included
+
+fixture invite-excluded invite
+fails_with invite-excluded "no file exists at"
