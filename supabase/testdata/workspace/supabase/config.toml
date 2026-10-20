@@ -1,0 +1,7 @@
+project_id = "abcdefghijklmnopqrst"
+
+[api]
+enabled = true
+
+[remotes.staging]
+project_id = "tsrqponmlkjihgfedcba"
