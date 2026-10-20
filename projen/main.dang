@@ -1,0 +1,53 @@
+"""
+Synthesizes a projen project in a pnpm workspace with the projen the lock file
+installs, and keeps the lock file in step with what synthesis changes.
+"""
+type Projen {
+  """
+  The workspace with its dependencies installed, from the typescript module.
+  """
+  pub installed: Container!
+
+  new(
+    ws: Workspace!,
+    baseImageAddress: String! = "node:24-slim",
+  ) {
+    self.installed = typescript(ws: ws, baseImageAddress: baseImageAddress).base
+    self
+  }
+
+  """
+  Synthesize the project and refresh the lock file. Synthesis runs again once
+  its changes are installed, so an upgraded projen component writes its own
+  output. The first synthesis skips post-synthesis, which in CI installs with a
+  frozen lock file that a changed dependency has put out of date.
+  """
+  pub synth: Changeset! @generate {
+    tracked(
+      installed
+        .withExec(["pnpm", "projen", "--no-post"])
+        .withExec(["pnpm", "install", "--no-frozen-lockfile"])
+        .withExec(["pnpm", "projen"])
+        .withExec(["pnpm", "install", "--no-frozen-lockfile"]),
+    ).changes(tracked(installed))
+  }
+
+  """
+  Paths that installing and building create.
+  """
+  let created: [String!]! = [
+    "**/node_modules",
+    "**/dist",
+    "**/.next",
+    "**/.tsbuild",
+    "**/*.tsbuildinfo",
+  ]
+
+  """
+  A container's workspace without what installing and building create, or what
+  the workspace ignores.
+  """
+  let tracked(ran: Container!): Directory! {
+    ran.directory("/src").filter(exclude: created, gitignore: true)
+  }
+}
