@@ -72,10 +72,11 @@ applies ESLint and Prettier fixes, and `snapshots` updates Vitest snapshots.
 Type-checking is in [typescript](#typescript).
 
 `projen` runs the steps of the [projen](#projen) module's `synth` on `ci`'s
-install of the workspace. It stays for workspaces that generate `ci/projen`, as
-langri-sha/github's `check.yml` does. A workspace that installs the projen
-module skips it, which drops it from `dagger check` too, so the two don't write
-the same files:
+install of the workspace, for workspaces that don't install that module.
+langri-sha/github's `check.yml` runs the module's generator when the workspace
+installs it, and `ci/projen` otherwise. A workspace that installs the projen
+module skips `ci/projen`, which drops it from `dagger check` too, so the two
+don't write the same files:
 
 ```toml
 [modules.ci.generate]
@@ -106,7 +107,7 @@ dagger call -y ci snapshots
 
 Every generator reads the same tree. A single `dagger generate` applies nothing
 when two of them change one file, as `projen` and `packages` can both rewrite a
-`package.json`. The post-upgrade job in langri-sha/github's `check.yml` ran its
+`package.json`. The post-upgrade job in langri-sha/github's `check.yml` runs its
 fixes in order, each on the previous one's output. To do the same, call the
 fixes and then run one generator at a time, after the merge-base action that
 [beachball](#beachball) needs:
@@ -114,7 +115,7 @@ fixes and then run one generator at a time, after the merge-base action that
 ```sh
 dagger call -y ci fix
 dagger call -y ci snapshots
-dagger generate -y ci/projen
+dagger generate -y projen # ci/projen without the projen module
 dagger generate -y ci/packages
 dagger generate -y uv
 dagger generate -y beachball/change
