@@ -36,7 +36,7 @@ nginx/testdata/test.sh       # check a fixture nginx image with the nginx module
 projen/testdata/test.sh      # synthesize a fixture projen project with the projen module; needs `dagger`
 terraform/testdata/test.sh   # check a fixture Terraform root with the terraform module; needs `dagger`
 vitest/testdata/test.sh      # run fixture Vitest suites with the vitest module; needs `dagger`
-dagger check                 # what CI runs: Prettier, and projen and the package checks through ./ci
+dagger check                 # what CI runs: Prettier, projen through ./projen, and the package checks through ./ci
 ```
 
 ## Conventions
