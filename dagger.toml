@@ -13,3 +13,9 @@ baseImageAddress = "node:24-slim"
 
 [modules.ci]
 source = "ci"
+
+[modules.ci.generate]
+skip = ["projen"]
+
+[modules.projen]
+source = "projen"
