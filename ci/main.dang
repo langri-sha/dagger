@@ -104,6 +104,27 @@ type Ci {
   ]
 
   """
+  What pnpm reads to resolve and install: the lock file, its settings, patches
+  and pnpmfiles, and every workspace manifest. The dependencies install from
+  these alone, and their build scripts run, in layers that a change to any
+  other file leaves cached. The workspace's own `prepare` and `postinstall`
+  scripts wait for the whole source: pnpm skips them when a second install has
+  nothing to do, so `pnpm rebuild --pending` runs them afterwards. The install
+  before it only brings directory dependencies, which these inputs hold just the
+  manifests of, up to date.
+  """
+  let installInputs: Directory! {
+    source.filter(include: [
+      "pnpm-lock.yaml",
+      "pnpm-workspace.yaml",
+      "**/.npmrc",
+      "**/package.json",
+      "**/*.patch",
+      "**/.pnpmfile.*",
+    ])
+  }
+
+  """
   The workspace with its dependencies installed.
   """
   let base: Container! {
@@ -118,8 +139,12 @@ type Ci {
       .withFile("/src/package.json", source.file("package.json"))
       .withWorkdir("/src")
       .withExec(["pnpm", "--version"])
+      .withDirectory("/src", installInputs)
+      .withExec(["pnpm", "install", "--frozen-lockfile", "--ignore-scripts"])
+      .withExec(["pnpm", "rebuild"])
       .withDirectory("/src", source)
-      .withExec(["pnpm", "install", "--frozen-lockfile"])
+      .withExec(["pnpm", "install", "--frozen-lockfile", "--ignore-scripts"])
+      .withExec(["pnpm", "rebuild", "--pending"])
   }
 
   """
