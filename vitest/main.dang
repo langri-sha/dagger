@@ -9,6 +9,12 @@ type Vitest {
   pub projects: [String!]!
 
   """
+  Test file filters, as `vitest run` takes them: substrings or globs of the
+  paths to run. Empty runs every file.
+  """
+  pub filters: [String!]!
+
+  """
   The workspace with its dependencies installed, from the typescript module.
   The whole source is there before `pnpm install`, so `prepare` scripts can
   generate the files the tests import.
@@ -19,8 +25,10 @@ type Vitest {
     ws: Workspace!,
     baseImageAddress: String! = "node:24-slim",
     projects: [String!]! = [],
+    filters: [String!]! = [],
   ) {
     self.projects = projects
+    self.filters = filters
     self.installed = typescript(ws: ws, baseImageAddress: baseImageAddress).base
     self
   }
@@ -34,7 +42,7 @@ type Vitest {
       args + ["--project", project]
     }
 
-    installed.withExec(selected).sync
+    installed.withExec(selected + filters).sync
 
     null
   }

@@ -52,5 +52,9 @@ fixture selected-project 'projects = ["generated"]'
 add_failing_test selected-project
 passes selected-project
 
+fixture filtered-files 'filters = ["packages/generated"]'
+add_failing_test filtered-files
+passes filtered-files
+
 fixture default-image-without-git
 fails_with default-image-without-git "spawnSync git ENOENT"
