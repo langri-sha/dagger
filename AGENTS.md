@@ -35,6 +35,7 @@ next/testdata/test.sh        # build a fixture Next.js app with the next module;
 nginx/testdata/test.sh       # check a fixture nginx image with the nginx module; needs `dagger`
 projen/testdata/test.sh      # synthesize a fixture projen project with the projen module; needs `dagger`
 terraform/testdata/test.sh   # check a fixture Terraform root with the terraform module; needs `dagger`
+typescript/testdata/test.sh  # install a fixture workspace in layers with the typescript module; needs `dagger`
 vitest/testdata/test.sh      # run fixture Vitest suites with the vitest module; needs `dagger`
 dagger check                 # what CI runs: Prettier, projen through ./projen, and the package checks through ./ci
 ```
