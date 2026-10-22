@@ -6,6 +6,6 @@
     "prepare": "node generate.js"
   },
   "dependencies": {
-    "esbuild": "0.25.5"
+    "esbuild": "0.28.2"
   }
 }
