@@ -34,6 +34,12 @@ type Next {
   pub secretEnvFile: Secret
 
   """
+  Files to lay over the app's directory before the build, such as a pre-built
+  static site that Next should serve from `public`.
+  """
+  pub overlay: Directory
+
+  """
   The workspace with its dependencies installed, from the typescript module.
   """
   pub installed: Container!
@@ -46,12 +52,14 @@ type Next {
     environment: [String!]! = [],
     cacheKey: String! = "",
     secretEnvFile: Secret,
+    overlay: Directory,
   ) {
     self.app = app
     self.outDir = outDir
     self.environment = environment
     self.cacheKey = if (cacheKey == "") { app } else { cacheKey }
     self.secretEnvFile = secretEnvFile
+    self.overlay = overlay
     self.installed = typescript(ws: ws, baseImageAddress: baseImageAddress).base
     self
   }
@@ -101,8 +109,8 @@ type Next {
       .withDirectory("/app", standalone, owner: "node")
       .withDirectory(serverDir + outDir + "/static", built.directory(outDir + "/static"), owner: "node")
 
-    let withPublic = if (installed.directory("/src/" + app).entries.contains("public/")) {
-      image.withDirectory(serverDir + "public", installed.directory("/src/" + app + "/public"), owner: "node")
+    let withPublic = if (prepared.directory("/src/" + app).entries.contains("public/")) {
+      image.withDirectory(serverDir + "public", prepared.directory("/src/" + app + "/public"), owner: "node")
     } else {
       image
     }
@@ -124,12 +132,23 @@ type Next {
   }
 
   """
+  The installed workspace with the overlay laid over the app.
+  """
+  let prepared: Container! {
+    if (overlay == null) {
+      installed
+    } else {
+      installed.withDirectory("/src/" + app, overlay!)
+    }
+  }
+
+  """
   The app, built. Next keeps its cache in `.next/cache` even when it exports to
   another directory, and clears an export directory before writing it, so the
   cache volume can't go anywhere else.
   """
   let built: Container! {
-    let configured = installed
+    let configured = prepared
       .withWorkdir("/src/" + app)
       .withMountedCache(".next/cache", cacheVolume("next-" + cacheKey))
       .withEnvVariable("NEXT_TELEMETRY_DISABLED", "1")

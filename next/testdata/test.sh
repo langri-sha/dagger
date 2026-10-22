@@ -151,6 +151,19 @@ secret_page secret-standalone
 image_prints secret-standalone "token loaded" "$(serve_and_fetch /)"
 image_prints secret-standalone "no secret" "grep -rqF 's3cret value' /app && echo leaked || echo no secret"
 
+overlay_fixture() {
+  local name=$1
+  "${2:-fixture}" "$name" "${@:3}"
+  mkdir -p "$scratch/$name/overlay/public/stories"
+  printf 'overlaid page\n' >"$scratch/$name/overlay/public/stories/index.txt"
+}
+
+overlay_fixture overlaid standalone_fixture 'overlay = "overlay"'
+image_prints overlaid "overlaid page" "$(serve_and_fetch /stories/index.txt)"
+
+overlay_fixture overlaid-export fixture '"GREETING=Hello from the fixture"' 'overlay = "overlay"'
+exports overlaid-export stories/index.txt "overlaid page"
+
 echo "== builds: dagger call runtime fails without a standalone output"
 if output=$(cd "$scratch/builds" && dagger call site runtime 2>&1); then
   echo "expected failure" >&2
