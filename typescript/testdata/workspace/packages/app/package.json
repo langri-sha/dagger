@@ -1,0 +1,11 @@
+{
+  "name": "app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare": "node generate.js"
+  },
+  "dependencies": {
+    "esbuild": "0.25.5"
+  }
+}

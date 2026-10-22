@@ -1,0 +1,19 @@
+"""
+Runs the typescript module's installs that follow the source copy,
+against a pnpm store volume that garbage collection emptied.
+"""
+type Probe {
+  pub installed: Container!
+
+  new(ws: Workspace!) {
+    self.installed = typescript(ws: ws).base
+    self
+  }
+
+  pub reinstall(emptyStoreKey: String!): Container! {
+    installed
+      .withMountedCache("/pnpm/store", cacheVolume("empty-store-" + emptyStoreKey))
+      .withExec(["pnpm", "install", "--frozen-lockfile", "--ignore-scripts", "--offline"])
+      .withExec(["pnpm", "rebuild", "--offline"])
+  }
+}
