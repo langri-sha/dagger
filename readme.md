@@ -150,6 +150,7 @@ outDir = "dist" # default: .next
 environment = ["ASSETS_URL=https://assets.example.com"] # default: []
 cacheKey = "web-docs" # default: the app
 secretEnvFile = "op://vault/web-build/env" # default: none
+overlay = "build/web-overlay" # default: none
 ```
 
 Next's build cache depends on the app's `basePath`. Installs of the module that
@@ -165,6 +166,10 @@ them. It fails when the secret has no lines or a line isn't `NAME=value`, naming
 the line by number. The secret's value is part of that exec's cache key, so
 changing it rebuilds. What the build itself prints or writes to the output is
 outside the module's control.
+
+`overlay` is a directory laid over the app's directory after the install and
+before the build, such as a Storybook build under `public/storybook` for the app
+to serve. It reaches the build output, and the `runtime` image's `public`.
 
 `runtime` returns a slim image that serves a build whose Next config sets
 `output: "standalone"`: the traced server, the static assets and `public`, run
