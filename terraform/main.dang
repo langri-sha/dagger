@@ -116,13 +116,15 @@ type Terraform {
 
   """
   The root module, initialized without a backend. Providers and modules come
-  off the registry; nothing else reaches out.
+  off the registry; nothing else reaches out. Terraform's plugin cache is not
+  safe for concurrent writers, so each root module locks a cache of its own, and
+  roots wait only on runs of the same root.
   """
   let root: Container! {
     base
       .withMountedCache(
         path: "/plugins",
-        cache: cacheVolume("terraform-plugins"),
+        cache: cacheVolume("terraform-plugins-" + rootModule),
         sharing: CacheSharingMode.LOCKED,
       )
       .withEnvVariable("TF_PLUGIN_CACHE_DIR", "/plugins")
