@@ -19,6 +19,11 @@ const project = new Project({
 
     devDeps: ['@langri-sha/prettier@^0.4.6'],
   },
+  claude: {
+    settings: {
+      attribution: { commit: '', pr: '', sessionUrl: false },
+    },
+  },
   codeowners: {
     '*': '@langri-sha',
   },
