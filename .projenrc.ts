@@ -13,7 +13,7 @@ const project = new Project({
     homepage: 'https://langri-sha.com',
     license: 'MIT',
     licensed: true,
-    minNodeVersion: '24.16.0',
+    minNodeVersion: '24.22.1',
     repository: 'langri-sha/dagger',
     type: 'module',
 
