@@ -22,10 +22,17 @@ type Terraform {
   """
   pub include: [String!]!
 
+  """
+  Names the provider cache volume. Root modules that share a key wait on each
+  other's checks, so give each its own. Defaults to the root module.
+  """
+  pub cacheKey: String!
+
   new(
     ws: Workspace!,
     rootModule: String! = "terraform",
     include: [String!]! = [],
+    cacheKey: String! = "",
   ) {
     include.each { path =>
       if (path.hasPrefix("/") or path.split("/").contains("..")) {
@@ -39,6 +46,7 @@ type Terraform {
     )
     self.rootModule = rootModule
     self.include = include
+    self.cacheKey = if (cacheKey == "") { rootModule } else { cacheKey }
     self
   }
 
@@ -117,14 +125,14 @@ type Terraform {
   """
   The root module, initialized without a backend. Providers and modules come
   off the registry; nothing else reaches out. Terraform's plugin cache is not
-  safe for concurrent writers, so each root module locks a cache of its own, and
-  roots wait only on runs of the same root.
+  safe for concurrent writers, so the volume is locked, and only root modules
+  sharing a `cacheKey` wait on each other.
   """
   let root: Container! {
     base
       .withMountedCache(
         path: "/plugins",
-        cache: cacheVolume("terraform-plugins-" + rootModule),
+        cache: cacheVolume("terraform-plugins-" + cacheKey),
         sharing: CacheSharingMode.LOCKED,
       )
       .withEnvVariable("TF_PLUGIN_CACHE_DIR", "/plugins")
