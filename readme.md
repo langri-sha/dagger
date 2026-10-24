@@ -334,7 +334,13 @@ source = "github.com/langri-sha/dagger/terraform@v1.0.0"
 [modules.terraform.settings]
 rootModule = "terraform/web" # default: terraform
 include = ["templates/**"] # default: []
+cacheKey = "web" # default: the root module
 ```
+
+Each root module downloads providers into a cache volume of its own, locked to
+one check at a time, since Terraform's plugin cache isn't safe for concurrent
+writers. Root modules that share a `cacheKey` share that volume and wait on each
+other's checks.
 
 ### typescript
 

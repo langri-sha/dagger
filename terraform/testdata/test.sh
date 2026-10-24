@@ -46,6 +46,9 @@ fails_with() {
 fixture plain plain
 passes plain
 
+fixture plain-cache-key plain 'cacheKey = "plain-web"'
+passes plain-cache-key
+
 fixture invite-included invite 'include = ["templates/**"]'
 passes invite-included
 
