@@ -50,6 +50,7 @@ const project = new Project({
     },
   },
   editorConfig: {},
+  githubTemplates: {},
   lintSynthesized: {},
   pnpmWorkspace: {
     minimumReleaseAgeExclude: ['@langri-sha/*', ...Project.presetPackages],
