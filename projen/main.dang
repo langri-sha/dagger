@@ -33,13 +33,15 @@ type Projen {
   }
 
   """
-  The installed workspace with git, which the slim image lacks.
+  The installed workspace with git and CA certificates, which the slim image
+  lacks.
   """
   let withGit: Container! {
     installed
       .withExec(["apt-get", "update", "--quiet"])
       .withExec([
-        "apt-get", "install", "--yes", "--quiet", "--no-install-recommends", "git",
+        "apt-get", "install", "--yes", "--quiet", "--no-install-recommends",
+        "ca-certificates", "git",
       ])
   }
 

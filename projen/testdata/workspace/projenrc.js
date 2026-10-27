@@ -1,4 +1,5 @@
 const { execFileSync } = require('node:child_process')
+const { accessSync } = require('node:fs')
 const { Project, TextFile, javascript } = require('projen')
 const stamp = require('stamp')
 
@@ -22,5 +23,6 @@ new TextFile(project, 'synthesized.txt', {
 })
 
 execFileSync('git', ['--version'])
+accessSync('/etc/ssl/certs/ca-certificates.crt')
 
 project.synth()
