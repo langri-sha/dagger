@@ -1,3 +1,4 @@
+const { execFileSync } = require('node:child_process')
 const { Project, TextFile, javascript } = require('projen')
 const stamp = require('stamp')
 
@@ -19,5 +20,7 @@ new TextFile(project, 'synthesized.txt', {
   committed: false,
   lines: ['Synthesized'],
 })
+
+execFileSync('git', ['--version'])
 
 project.synth()
