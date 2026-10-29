@@ -88,6 +88,9 @@ type Changesets {
   """
   let handOver: String! = ".merge-base"
 
+  # renovate: datasource=npm depName=corepack
+  let corepackVersion: String! = "0.36.0"
+
   """
   The workspace with its dependencies installed from the lock file.
   """
@@ -99,6 +102,7 @@ type Changesets {
       .withEnvVariable("COREPACK_ENABLE_DOWNLOAD_PROMPT", "0")
       .withEnvVariable("CI", "true")
       .withEnvVariable("HUSKY", "0")
+      .withExec(["npm", "install", "--global", "corepack@" + corepackVersion])
       .withExec(["corepack", "enable"])
       .withFile("/src/package.json", source.file("package.json"))
       .withWorkdir("/src")
