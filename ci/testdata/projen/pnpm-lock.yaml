@@ -170,8 +170,8 @@ importers:
         specifier: 10.8.1
         version: 10.8.1
       projen:
-        specifier: 0.104.8
-        version: 0.104.8(constructs@10.8.1)
+        specifier: 0.104.14
+        version: 0.104.14(constructs@10.8.1)
       stamp:
         specifier: file:stamp-1
         version: file:stamp-1
@@ -181,8 +181,8 @@ packages:
   constructs@10.8.1:
     resolution: {integrity: sha512-98yGXYyhePqPYh3cYu8nzBERmAhC0DONe3UD03okK0nehZ7hYP4wgZuf02a04+uOWxnTJ5Rpp5m0GRNpwyLGGA==}
 
-  projen@0.104.8:
-    resolution: {integrity: sha512-+aP/lwF00aclH+CLMta1ikb4Vzb2jrCQlK4usDevnvpSS0r/uG+CFj08RED813u3Y++xvKJK3Kwn58ctKLq45g==}
+  projen@0.104.14:
+    resolution: {integrity: sha512-mK1MEk4WJD32lvo4JqyqjZUYJ2rz1ju2OQSw0aJoO1AyZzdmEbESTT56amQeg54l0BCG4pSmRD2uxjlqYx3Acg==}
     engines: {node: '>= 16.0.0'}
     hasBin: true
     peerDependencies:
@@ -211,7 +211,7 @@ snapshots:
 
   constructs@10.8.1: {}
 
-  projen@0.104.8(constructs@10.8.1):
+  projen@0.104.14(constructs@10.8.1):
     dependencies:
       constructs: 10.8.1
 
