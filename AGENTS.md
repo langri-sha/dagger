@@ -5,8 +5,8 @@ Context for AI coding agents working in this repo.
 ## What this is
 
 A repository of reusable Dagger modules: Dang modules for Dagger 1.0, one per
-top-level directory (`actionlint/`, `beachball/`, `cargo/`, `ci/`, `next/`,
-`nginx/`, `projen/`, `terraform/`, `typescript/`, `vitest/`).
+top-level directory (`actionlint/`, `beachball/`, `cargo/`, `changesets/`,
+`ci/`, `next/`, `nginx/`, `projen/`, `terraform/`, `typescript/`, `vitest/`).
 
 ## Who owns which file
 

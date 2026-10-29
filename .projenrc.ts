@@ -33,6 +33,7 @@ const project = new Project({
       actionlint: {},
       beachball: {},
       cargo: {},
+      changesets: {},
       ci: {},
       next: {
         dependencies: ['../typescript'],

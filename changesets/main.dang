@@ -1,0 +1,157 @@
+"""
+Change-file checks for pnpm workspaces released with Changesets: whether the
+changes come with a change file.
+
+Changesets compares the working tree to its merge base with the base branch.
+Both come from `.merge-base`, which langri-sha/github's merge-base action
+writes from a shallow checkout, so the module never reads the checkout's
+history.
+"""
+type Changesets {
+  """
+  The workspace source, without what installing and building create.
+  """
+  pub source: Directory!
+
+  """
+  The base image to use. Changesets runs git, so it has to ship it.
+  """
+  pub baseImageAddress: String!
+
+  new(
+    ws: Workspace!,
+    baseImageAddress: String! = "node:24",
+  ) {
+    self.source = ws.directory("/", exclude: installed + [handOver])
+    self.baseImageAddress = baseImageAddress
+    self
+  }
+
+  """
+  Check that the changes come with a change file. An empty one counts.
+  """
+  pub changeFiles(ws: Workspace!): Void @check {
+    compared(ws)
+      .withExec([
+        "pnpm", "exec", "changeset", "status", "--since", branch(ws),
+      ])
+      .sync
+
+    null
+  }
+
+  """
+  Paths that installing and building create.
+  """
+  let installed: [String!]! = [
+    ".git",
+    "**/node_modules",
+    "**/dist",
+    "**/.next",
+    "**/.tsbuild",
+    "**/*.tsbuildinfo",
+  ]
+
+  """
+  Where langri-sha/github's merge-base action writes the merge base (`sha`),
+  the base branch (`ref`) and the paths changed since (`changes`, as
+  `git diff --name-status --no-renames -z` prints them).
+  """
+  let handOver: String! = ".merge-base"
+
+  """
+  The workspace with its dependencies installed from the lock file.
+  """
+  let base: Container! {
+    container
+      .from(baseImageAddress)
+      .withMountedCache("/pnpm/store", cacheVolume("pnpm-store"))
+      .withEnvVariable("PNPM_CONFIG_STORE_DIR", "/pnpm/store")
+      .withEnvVariable("COREPACK_ENABLE_DOWNLOAD_PROMPT", "0")
+      .withEnvVariable("CI", "true")
+      .withEnvVariable("HUSKY", "0")
+      .withExec(["corepack", "enable"])
+      .withFile("/src/package.json", source.file("package.json"))
+      .withWorkdir("/src")
+      .withExec(["pnpm", "--version"])
+      .withDirectory("/src", source)
+      .withExec(["pnpm", "install", "--frozen-lockfile"])
+  }
+
+  """
+  The installed workspace on a history of two commits, built from the
+  workspace and the changed paths alone.
+  """
+  let compared(ws: Workspace!): Container! {
+    base.withDirectory("/src/.git", history(ws))
+  }
+
+  """
+  The `.git` of a repository whose HEAD is the workspace, and whose
+  `refs/remotes/origin/<ref>` is HEAD with each changed path put back: removed
+  if it was added, and otherwise given content that differs from HEAD's.
+  Changesets' diff between the two lists exactly the changed paths.
+  """
+  let history(ws: Workspace!): Directory! {
+    container
+      .from(baseImageAddress)
+      .withDirectory("/src", source)
+      .withDirectory("/merge-base", mergeBase(ws))
+      .withWorkdir("/src")
+      .withExec(["bash", "-c", commitChanges])
+      .directory("/src/.git")
+  }
+
+  """
+  Commit the workspace in `/src` as HEAD and its changed paths, put back, as
+  the base, from the hand-over in `/merge-base`.
+  """
+  let commitChanges: String! = """
+    set -euo pipefail
+    export GIT_LITERAL_PATHSPECS=1
+    export GIT_AUTHOR_NAME=changesets GIT_AUTHOR_EMAIL=changesets@localhost
+    export GIT_COMMITTER_NAME=changesets GIT_COMMITTER_EMAIL=changesets@localhost
+    sha=$(< /merge-base/sha)
+    ref=$(< /merge-base/ref)
+
+    git init --quiet
+    git add --all --force
+    head=$(git write-tree)
+
+    while IFS= read -r -d '' status && IFS= read -r -d '' path; do
+      if [[ $status != [AMDT] ]]; then
+        echo "error: $path has status $status in .merge-base/changes, and only A, M, D and T are expected" >&2
+        exit 1
+      fi
+      if ! blob=$(git rev-parse --verify --quiet ":$path"); then
+        printf '100644 %s\t%s\0' "$(git hash-object -w --stdin < /dev/null)" "$path"
+      elif [[ $status == A ]]; then
+        printf '0 %040d\t%s\0' 0 "$path"
+      else
+        printf '100644 %s\t%s\0' "$({ git cat-file blob "$blob"; echo; } | git hash-object -w --stdin)" "$path"
+      fi
+    done < /merge-base/changes | git update-index -z --index-info
+
+    git update-ref "refs/remotes/origin/$ref" "$(git commit-tree "$(git write-tree)" -m "Merge base $sha")"
+    git update-ref HEAD "$(git commit-tree "$head" -p "refs/remotes/origin/$ref" -m HEAD)"
+    git read-tree "$head"
+  """
+
+  """
+  The branch Changesets compares HEAD to.
+  """
+  let branch(ws: Workspace!): String! {
+    "origin/" + mergeBase(ws).file("ref").contents.trimSpace
+  }
+
+  """
+  The merge-base action's hand-over. It's read here, not in the constructor,
+  so that a workspace without it fails the functions that need it and nothing
+  else.
+  """
+  let mergeBase(ws: Workspace!): Directory! {
+    ws.directory("/" + handOver).sync rescue {
+      else => raise "Changesets compares HEAD to the merge base that langri-sha/github's merge-base action writes to " + handOver + ", and this workspace has none: run the action before dagger check."
+    }
+  }
+}
