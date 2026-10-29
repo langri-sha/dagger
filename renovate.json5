@@ -150,5 +150,12 @@
       ],
       depTypeTemplate: 'dependencies',
     },
+    {
+      customType: 'regex',
+      managerFilePatterns: ['/\\.dang$/'],
+      matchStrings: [
+        '# renovate: datasource=(?<datasource>[\\w.-]+) depName=(?<depName>\\S+)\\s+let \\w+: String! = "(?<currentValue>[^"]+)"',
+      ],
+    },
   ],
 }
