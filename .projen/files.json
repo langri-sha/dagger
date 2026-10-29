@@ -17,6 +17,7 @@
     "actionlint/dagger-module.toml",
     "beachball/dagger-module.toml",
     "cargo/dagger-module.toml",
+    "changesets/dagger-module.toml",
     "ci/dagger-module.toml",
     "CODEOWNERS",
     "license",

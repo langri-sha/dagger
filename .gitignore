@@ -24,6 +24,7 @@ node_modules/
 !/actionlint/dagger-module.toml
 !/beachball/dagger-module.toml
 !/cargo/dagger-module.toml
+!/changesets/dagger-module.toml
 !/ci/dagger-module.toml
 !/next/dagger-module.toml
 !/nginx/dagger-module.toml
