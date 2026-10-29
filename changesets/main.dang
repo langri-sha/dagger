@@ -1,6 +1,6 @@
 """
 Change-file checks for pnpm workspaces released with Changesets: whether the
-changes come with a change file.
+changes come with a change file, and a generator that writes an empty one.
 
 Changesets compares the working tree to its merge base with the base branch.
 Both come from `.merge-base`, which langri-sha/github's merge-base action
@@ -38,6 +38,35 @@ type Changesets {
       .sync
 
     null
+  }
+
+  """
+  Write an empty change file when the changes have none. It releases nothing:
+  the changes it covers, such as a dependency bump in dev tooling, don't
+  deserve a version of their own. Changesets names the file at random, and the
+  check only sees it once it's committed and the merge-base action has run
+  again.
+  """
+  pub change(ws: Workspace!): Changeset! @generate {
+    let ran = compared(ws).withExec(
+      ["pnpm", "exec", "changeset", "status", "--since", branch(ws)],
+      expect: ReturnType.ANY,
+    )
+
+    let written = if (ran.exitCode == 0) {
+      ran
+    } else {
+      if (ran.stdout.contains("no changesets were found")) {
+        ran.withExec(["pnpm", "exec", "changeset", "--empty"])
+      } else {
+        raise "changeset status failed (exit " + toString(ran.exitCode) + "):\n" + (ran.stderr + "\n" + ran.stdout).trimSpace
+      }
+    }
+
+    written
+      .directory("/src")
+      .filter(include: [".changeset/**"])
+      .changes(source.filter(include: [".changeset/**"]))
   }
 
   """
