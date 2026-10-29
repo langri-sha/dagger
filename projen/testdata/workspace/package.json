@@ -12,7 +12,7 @@
   },
   "devDependencies": {
     "constructs": "10.8.1",
-    "projen": "0.104.8",
+    "projen": "0.104.14",
     "stamp": "file:stamp-1"
   },
   "pnpm": {},
