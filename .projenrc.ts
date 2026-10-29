@@ -16,8 +16,6 @@ const project = new Project({
     minNodeVersion: '24.22.1',
     repository: 'langri-sha/dagger',
     type: 'module',
-
-    devDeps: ['@langri-sha/prettier@^0.4.6'],
   },
   claude: {
     settings: {
