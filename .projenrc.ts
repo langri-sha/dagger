@@ -70,6 +70,15 @@ const project = new Project({
       'github>langri-sha/renovate-config',
       'customManagers:dockerfileVersions',
     ],
+    customManagers: [
+      {
+        customType: 'regex',
+        managerFilePatterns: ['/\\.dang$/'],
+        matchStrings: [
+          '# renovate: datasource=(?<datasource>[\\w.-]+) depName=(?<depName>\\S+)\\s+let \\w+: String! = "(?<currentValue>[^"]+)"',
+        ],
+      },
+    ],
   },
   worktrunk: {},
   skills: {
