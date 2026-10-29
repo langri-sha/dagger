@@ -71,7 +71,12 @@ Checks that the changes come with a Changesets change file, running
 nothing, counts. Like the beachball module, it takes the merge base from
 `.merge-base`, which langri-sha/github's `merge-base` action writes from a
 shallow checkout, and never reads the checkout's history. Without `.merge-base`,
-the check fails.
+the check and the generator fail.
+
+The generator writes an empty change file when the check would fail, for pull
+requests that don't deserve a release, such as Renovate's dev-tooling bumps.
+Changesets names the file at random, and the check only sees it once it's
+committed and the merge-base action has run again.
 
 Changesets counts any changed file, `.changeset/` included, toward a package
 that releases. A private package does so only with `privatePackages.version` set

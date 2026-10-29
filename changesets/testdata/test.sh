@@ -106,6 +106,30 @@ check_out() {
   hand_over "$1"
 }
 
+generates_nothing() {
+  local name=$1 before
+  before=$(change_files "$name")
+  (cd "$scratch/$name" && dagger generate -y)
+  test "$(change_files "$name")" = "$before"
+}
+
+change_files() {
+  find "$scratch/$1/.changeset" -name '*.md' | sort
+}
+
+generate_fails_with() {
+  local name=$1 message=$2 output
+  if output=$(cd "$scratch/$name" && dagger generate -y 2>&1); then
+    echo "expected failure" >&2
+    return 1
+  fi
+  grep -qF "$message" <<<"$output" || {
+    echo "$output" >&2
+    echo "missing: $message" >&2
+    return 1
+  }
+}
+
 passes() {
   local name=$1
   echo "== $name: dagger check passes"
@@ -138,6 +162,7 @@ add_change_file merge-with-change-file
 merge_pull_request merge-with-change-file
 check_out merge-with-change-file
 passes merge-with-change-file
+generates_nothing merge-with-change-file
 
 fixture merge-with-empty-change-file
 change_index merge-with-empty-change-file
@@ -166,9 +191,25 @@ revert_change empty-merge
 merge_pull_request empty-merge
 check_out empty-merge
 passes empty-merge
+generates_nothing empty-merge
 
 fixture no-hand-over
 change_index no-hand-over
 merge_pull_request no-hand-over
 clone no-hand-over
 fails_with no-hand-over "run the action before dagger check"
+
+fixture generate
+change_index generate
+merge_pull_request generate
+check_out generate
+fails_with generate "no changesets were found"
+(cd "$scratch/generate" && dagger generate -y)
+test "$(change_files generate | wc -l)" -eq 1
+test "$(cat "$(change_files generate)")" = "$(printf -- '---\n\n---')"
+
+fixture generate-without-hand-over
+change_index generate-without-hand-over
+merge_pull_request generate-without-hand-over
+clone generate-without-hand-over
+generate_fails_with generate-without-hand-over "run the action before dagger check"
