@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "langri-sha/dagger"
+    "url": "git+https://github.com/langri-sha/dagger.git"
   },
   "license": "MIT",
   "author": {
@@ -31,7 +31,7 @@
   },
   "devDependencies": {
     "@langri-sha/prettier": "^0.4.6",
-    "@langri-sha/projen-project": "^0.43.0",
+    "@langri-sha/projen-project": "^0.44.2",
     "prettier": "3.9.9",
     "projen": "0.104.1",
     "skills": "1.7.4",
