@@ -25,6 +25,9 @@ fixture() {
   local repo
   repo=$(repository "$1")
   workspace "$repo"
+  if [[ ${2:-} == pending ]]; then
+    printf -- '---\n"fixture": patch\n---\n\nChange the index\n' >"$repo/.changeset/change-index.md"
+  fi
   git -C "$repo" init --quiet -b main
   git -C "$repo" add -A
   (cd "$repo" && commit -m base)
@@ -51,6 +54,30 @@ add_change_file() {
   printf -- '---\n"fixture": patch\n---\n\nChange the index\n' >"$repo/.changeset/change-index.md"
   git -C "$repo" add .changeset
   (cd "$repo" && commit -m "Add a change file")
+}
+
+delete_change_file() {
+  local repo
+  repo=$(repository "$1")
+  git -C "$repo" rm --quiet .changeset/change-index.md
+  (cd "$repo" && commit -m "Delete the change file")
+}
+
+bump_version() {
+  local repo
+  repo=$(repository "$1")
+  sed -i 's/"version": "0.0.0"/"version": "0.0.1"/' "$repo/package.json"
+  (cd "$repo" && commit -am "Bump the version")
+}
+
+version_packages() {
+  local repo
+  repo=$(repository "$1")
+  git -C "$repo" rm --quiet .changeset/change-index.md
+  sed -i 's/"version": "0.0.0"/"version": "0.0.1"/' "$repo/package.json"
+  printf '# fixture\n\n## 0.0.1\n\n- Change the index\n' >"$repo/CHANGELOG.md"
+  git -C "$repo" add package.json CHANGELOG.md
+  (cd "$repo" && commit -m "Version packages")
 }
 
 add_empty_change_file() {
@@ -213,3 +240,23 @@ change_index generate-without-hand-over
 merge_pull_request generate-without-hand-over
 clone generate-without-hand-over
 generate_fails_with generate-without-hand-over "run the action before dagger check"
+
+fixture version-pull-request pending
+version_packages version-pull-request
+merge_pull_request version-pull-request
+check_out version-pull-request
+passes version-pull-request
+generates_nothing version-pull-request
+
+fixture version-bump-without-deleting pending
+bump_version version-bump-without-deleting
+merge_pull_request version-bump-without-deleting
+check_out version-bump-without-deleting
+fails_with version-bump-without-deleting "no changesets were found"
+
+fixture deleting-without-version-bump pending
+change_index deleting-without-version-bump
+delete_change_file deleting-without-version-bump
+merge_pull_request deleting-without-version-bump
+check_out deleting-without-version-bump
+fails_with deleting-without-version-bump "no changesets were found"

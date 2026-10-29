@@ -31,11 +31,13 @@ type Changesets {
   Check that the changes come with a change file. An empty one counts.
   """
   pub changeFiles(ws: Workspace!): Void @check {
-    compared(ws)
-      .withExec([
-        "pnpm", "exec", "changeset", "status", "--since", branch(ws),
-      ])
-      .sync
+    if (!versionPullRequest(ws)) {
+      compared(ws)
+        .withExec([
+          "pnpm", "exec", "changeset", "status", "--since", branch(ws),
+        ])
+        .sync
+    }
 
     null
   }
@@ -45,7 +47,7 @@ type Changesets {
   the changes it covers, such as a dependency bump in dev tooling, don't
   deserve a version of their own. Changesets names the file at random, and the
   check only sees it once it's committed and the merge-base action has run
-  again.
+  again. A version pull request gets none, since it consumes the change files.
   """
   pub change(ws: Workspace!): Changeset! @generate {
     let ran = compared(ws).withExec(
@@ -53,7 +55,9 @@ type Changesets {
       expect: ReturnType.ANY,
     )
 
-    let written = if (ran.exitCode == 0) {
+    let written = if (versionPullRequest(ws)) {
+      container.from(baseImageAddress).withDirectory("/src", source)
+    } else if (ran.exitCode == 0) {
       ran
     } else {
       if (ran.stdout.contains("no changesets were found")) {
@@ -168,6 +172,43 @@ type Changesets {
     git update-ref "refs/remotes/origin/$ref" "$(git commit-tree "$(git write-tree)" -m "Merge base $sha")"
     git update-ref HEAD "$(git commit-tree "$head" -p "refs/remotes/origin/$ref" -m HEAD)"
     git read-tree "$head"
+  """
+
+  """
+  Whether the changes are those of `changeset version`: it deletes the change
+  files it consumes and bumps the version of each package it releases, and it
+  adds none. A pull request that only deletes a change file, or only bumps a
+  version, is still one that needs its own change file. The hand-over names no
+  branch, so the changed paths are all there is to tell it by.
+  """
+  let versionPullRequest(ws: Workspace!): Boolean! {
+    container
+      .from(baseImageAddress)
+      .withDirectory("/merge-base", mergeBase(ws))
+      .withExec(["bash", "-c", detectsVersionPullRequest], expect: ReturnType.ANY)
+      .exitCode == 0
+  }
+
+  """
+  Succeed when the changed paths in `/merge-base/changes` delete a change file
+  and change a package manifest without adding or changing any change file.
+  Changesets' `README.md` is not a change file.
+  """
+  let detectsVersionPullRequest: String! = """
+    set -euo pipefail
+    deleted=false
+    bumped=false
+
+    while IFS= read -r -d '' status && IFS= read -r -d '' path; do
+      if [[ $path == .changeset/*.md && $path != .changeset/*/* && $path != .changeset/README.md ]]; then
+        [[ $status == D ]] || exit 1
+        deleted=true
+      elif [[ $status == M && ( $path == package.json || $path == */package.json ) ]]; then
+        bumped=true
+      fi
+    done < /merge-base/changes
+
+    $deleted && $bumped
   """
 
   """
