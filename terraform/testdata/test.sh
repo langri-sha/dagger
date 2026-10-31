@@ -7,7 +7,7 @@ scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT
 
 fixture() {
-  local name=$1 workspace=$2 settings=${3:-}
+  local name=$1 workspace=$2 settings=${3:-} root=${4:-terraform/web}
   local dir=$scratch/$name
   mkdir -p "$dir/modules/terraform"
   cp -r "$here/$workspace/." "$dir/"
@@ -18,7 +18,7 @@ fixture() {
 source = "modules/terraform"
 
 [modules.terraform.settings]
-rootModule = "terraform/web"
+rootModule = "$root"
 $settings
 TOML
 }
@@ -60,3 +60,9 @@ fails_with absolute-include "include /templates/** must be relative to the works
 
 fixture parent-include invite 'include = ["templates/../../secrets/**"]'
 fails_with parent-include "include templates/../../secrets/** must be relative to the workspace root"
+
+fixture absolute-root plain "" /terraform/web
+fails_with absolute-root "rootModule /terraform/web must be relative to the workspace root"
+
+fixture parent-root plain "" terraform/../../web
+fails_with parent-root "rootModule terraform/../../web must be relative to the workspace root"

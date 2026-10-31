@@ -352,8 +352,8 @@ without needing cloud credentials, and keeps the provider lock file current. It
 runs the Terraform version the root module pins. A root module that reads files
 outside `terraform/`, say with
 `file("${path.module}/../../templates/invite.html")`, needs them mounted:
-`include` lists their globs relative to the workspace root, and rejects absolute
-paths and `..` segments.
+`include` lists their globs relative to the workspace root; it and `rootModule`
+reject absolute paths and `..` segments.
 
 ```toml
 [modules.terraform]
