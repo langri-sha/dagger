@@ -6,7 +6,7 @@ const project = new Project({ name: 'fixture', projenrcJson: false })
 const pkg = new javascript.NodePackage(project, {
   packageManager: javascript.NodePackageManager.PNPM,
   addPackageManagerToDevEngines: false,
-  devDeps: ['constructs@10.8.1', 'projen@0.104.17', 'stamp@file:stamp-1'],
+  devDeps: ['constructs@10.8.1', 'projen@0.104.19', 'stamp@file:stamp-1'],
 })
 
 pkg.addField('packageManager', 'pnpm@12.16.1')
