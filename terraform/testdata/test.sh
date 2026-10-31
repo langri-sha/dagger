@@ -66,3 +66,18 @@ fails_with absolute-root "rootModule /terraform/web must be relative to the work
 
 fixture parent-root plain "" terraform/../../web
 fails_with parent-root "rootModule terraform/../../web must be relative to the workspace root"
+
+fixture shared-included shared 'include = ["terraform/modules/network/**"]' terraform/app
+passes shared-included
+
+fixture shared-excluded shared "" terraform/app
+fails_with shared-excluded "Unreadable module directory"
+
+fixture shared-whole-tree shared 'include = ["terraform/**"]' terraform/app
+passes shared-whole-tree
+
+fixture shared-trailing-slash shared 'include = ["terraform/modules/network/**"]' terraform/app/
+passes shared-trailing-slash
+
+fixture flat-default-root flat "" terraform
+passes flat-default-root

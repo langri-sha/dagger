@@ -1,12 +1,14 @@
 """
-Checks for the Terraform sources: formatting, validation, tests and the lock
+Checks for a Terraform root module: formatting, validation, tests and the lock
 file. They stay credential-free, initializing with `-backend=false` against
-mocked providers, so plan and apply remain out of reach.
+mocked providers, so plan and apply remain out of reach. Each instance mounts
+only its root module's directory and the paths `include` adds, so a change
+elsewhere leaves its checks cached.
 """
 type Terraform {
   """
-  The Terraform sources: everything under `terraform/`, and the paths `include`
-  adds.
+  The Terraform sources: the root module's own directory, and the paths
+  `include` adds.
   """
   pub source: Directory!
 
@@ -17,8 +19,11 @@ type Terraform {
   pub rootModule: String!
 
   """
-  Further workspace paths to mount beside `terraform/`, for a root module that
-  reads files from outside it, as globs relative to the workspace root.
+  Further workspace paths to mount beside the root module, for a root that reads
+  files from outside its directory, as globs relative to the workspace root:
+  the shared modules it calls, such as `terraform/modules/network/**`, or the
+  files it reads. A root that reads the whole tree sets
+  `include = ["terraform/**"]`.
   """
   pub include: [String!]!
 
@@ -44,7 +49,7 @@ type Terraform {
     }
     self.source = ws.directory(
       "/",
-      include: ["terraform/**"] + include,
+      include: [rootModule + "/**"] + include,
       exclude: initialized,
     )
     self.rootModule = rootModule
@@ -54,7 +59,8 @@ type Terraform {
   }
 
   """
-  Check the formatting of every Terraform file, the shared modules included.
+  Check the formatting of every Terraform file the root module mounts: its own
+  directory and the paths `include` adds.
   """
   pub fmt: Void @check {
     base.withExec(["terraform", "fmt", "-recursive", "-check"]).sync
