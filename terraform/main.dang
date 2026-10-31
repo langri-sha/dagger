@@ -34,6 +34,9 @@ type Terraform {
     include: [String!]! = [],
     cacheKey: String! = "",
   ) {
+    if (rootModule.hasPrefix("/") or rootModule.split("/").contains("..")) {
+      raise "rootModule " + rootModule + " must be relative to the workspace root, with no .. segment."
+    }
     include.each { path =>
       if (path.hasPrefix("/") or path.split("/").contains("..")) {
         raise "include " + path + " must be relative to the workspace root, with no .. segment."
