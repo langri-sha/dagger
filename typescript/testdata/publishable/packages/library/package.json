@@ -1,0 +1,28 @@
+{
+  "name": "library",
+  "version": "1.0.0",
+  "private": true,
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "license": "MIT",
+  "author": {
+    "name": "Fixture",
+    "email": "fixture@example.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://example.com/fixture.git"
+  },
+  "jsii": {
+    "tsc": {
+      "outDir": "lib",
+      "rootDir": "src"
+    }
+  },
+  "scripts": {
+    "prepublishOnly": "jsii"
+  },
+  "devDependencies": {
+    "jsii": "6.0.19"
+  }
+}

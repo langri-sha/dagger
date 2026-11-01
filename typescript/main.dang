@@ -50,20 +50,31 @@ type Typescript {
 
   """
   Run the `prepublishOnly` script of every package that has one, the workspace
-  root included, as publishing would. A change that only breaks that build
-  otherwise passes the checks and fails the release. Does nothing unless
-  `prepublish` is set.
+  root included, as publishing would, then validate every `.jsii` assembly they
+  leave behind with `jsii-tree`. A change that only breaks that build otherwise
+  passes the checks and fails the release. Does nothing unless `prepublish` is
+  set.
   """
   pub publishable: Void @check {
     if (prepublish) {
-      base
+      let built = base.withExec([
+        "pnpm",
+        "-r",
+        "--if-present",
+        "--include-workspace-root",
+        "run",
+        "prepublishOnly",
+      ])
+
+      container
+        .from(baseImageAddress)
+        .withExec(["npm", "install", "--global", "jsii-reflect@" + jsiiReflectVersion])
+        .withMountedDirectory("/src", built.directory("/src"))
+        .withWorkdir("/src")
         .withExec([
-          "pnpm",
-          "-r",
-          "--if-present",
-          "--include-workspace-root",
-          "run",
-          "prepublishOnly",
+          "sh",
+          "-c",
+          "find . -name .jsii -not -path '*/node_modules/*' -print0 | xargs -0 -r -n1 jsii-tree --validate",
         ])
         .sync
     }
@@ -103,6 +114,9 @@ type Typescript {
       "**/.pnpmfile.*",
     ])
   }
+
+  # renovate: datasource=npm depName=jsii-reflect
+  let jsiiReflectVersion: String! = "1.142.0"
 
   # renovate: datasource=npm depName=corepack
   let corepackVersion: String! = "0.36.0"
