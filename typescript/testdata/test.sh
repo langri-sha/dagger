@@ -21,6 +21,36 @@ fixture() {
   printf '[modules.typescript]\nsource = "modules/typescript"\n\n[modules.probe]\nsource = "modules/probe"\n' >"$dir/dagger.toml"
 }
 
+check_fixture() {
+  local dir=$scratch/$1 settings=${2:-}
+  mkdir -p "$dir/modules/typescript"
+  cp -r "$here/publishable/." "$dir/"
+  git -C "$dir" init --quiet
+  cp "$module/main.dang" "$module/dagger-module.toml" "$dir/modules/typescript/"
+  printf '[modules.typescript]\nsource = "modules/typescript"\n%s' "$settings" >"$dir/dagger.toml"
+}
+
+prepublish_on=$'\n[modules.typescript.settings]\nprepublish = true\n'
+
+publishable_passes() {
+  local name=$1
+  echo "== $name: publishable passes"
+  (cd "$scratch/$name" && dagger check typescript:publishable >"$scratch/$name.log" 2>&1)
+}
+
+publishable_fails() {
+  local name=$1 reason=$2
+  echo "== $name: publishable fails on $reason"
+  if (cd "$scratch/$name" && dagger check typescript:publishable >"$scratch/$name.log" 2>&1); then
+    echo "publishable passed" >&2
+    return 1
+  fi
+  grep -q "$reason" "$scratch/$name.log" || {
+    echo "no $reason in the log" >&2
+    return 1
+  }
+}
+
 read_file() {
   local name=$1 path=$2
   (cd "$scratch/$name" && dagger call -y typescript base file --path "$path" contents 2>"$scratch/$name.log")
@@ -86,3 +116,17 @@ dependency_layers workspace rerun
 
 echo "== workspace: the scripts rerun offline against an emptied store volume"
 (cd "$scratch/workspace" && dagger call -y probe reinstall --empty-store-key "$(date +%s)-$$" file --path /src/packages/app/generated.txt contents >/dev/null)
+
+check_fixture prepublished "$prepublish_on"
+publishable_passes prepublished
+
+edit prepublished packages/scripted/prepublish.js "process.exit(1)"
+publishable_fails prepublished 'ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL'
+
+check_fixture rooted "$prepublish_on"
+edit rooted package.json '{"name": "fixture", "private": true, "packageManager": "pnpm@12.16.1", "scripts": {"prepublishOnly": "exit 1"}}'
+publishable_fails rooted 'ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL'
+
+check_fixture opted_out
+edit opted_out packages/scripted/prepublish.js "process.exit(1)"
+publishable_passes opted_out

@@ -386,6 +386,11 @@ workspace manifest install the dependencies and build them, and only then comes
 the rest of the source, where `pnpm rebuild --pending` runs the workspace's own
 lifecycle scripts. An edit to any other file reuses the dependency layers.
 
+The `publishable` check runs every package's `prepublishOnly` script, the
+workspace root's too, as publishing would, so a build that only fails at release
+fails the pull request. It does nothing unless `prepublish` is set, since those
+scripts build and may have side effects.
+
 ```toml
 [modules.typescript]
 source = "github.com/langri-sha/dagger/typescript@v1.0.0"
@@ -393,6 +398,7 @@ source = "github.com/langri-sha/dagger/typescript@v1.0.0"
 [modules.typescript.settings]
 baseImageAddress = "node:24-slim" # default
 projects = ["."] # default
+prepublish = false # default
 ```
 
 ### vitest
