@@ -388,8 +388,9 @@ lifecycle scripts. An edit to any other file reuses the dependency layers.
 
 The `publishable` check runs every package's `prepublishOnly` script, the
 workspace root's too, as publishing would, so a build that only fails at release
-fails the pull request. It does nothing unless `prepublish` is set, since those
-scripts build and may have side effects.
+fails the pull request, then validates each `.jsii` they write with `jsii-tree`.
+It does nothing unless `prepublish` is set, since those scripts build and may
+have side effects.
 
 ```toml
 [modules.typescript]

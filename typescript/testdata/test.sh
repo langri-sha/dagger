@@ -127,6 +127,14 @@ check_fixture rooted "$prepublish_on"
 edit rooted package.json '{"name": "fixture", "private": true, "packageManager": "pnpm@12.16.1", "scripts": {"prepublishOnly": "exit 1"}}'
 publishable_fails rooted 'ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL'
 
+check_fixture jsii_incompatible "$prepublish_on"
+edit jsii_incompatible packages/library/src/index.ts 'export class Greeter { public greet(extra: Map<string, string>): void {} }'
+publishable_fails jsii_incompatible 'JSII3001'
+
+check_fixture jsii_malformed "$prepublish_on"
+edit jsii_malformed packages/scripted/prepublish.js "import { writeFileSync } from 'node:fs'; writeFileSync('.jsii', '{}')"
+publishable_fails jsii_malformed 'exit code: 123'
+
 check_fixture opted_out
 edit opted_out packages/scripted/prepublish.js "process.exit(1)"
 publishable_passes opted_out
