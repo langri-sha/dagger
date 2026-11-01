@@ -19,9 +19,11 @@ option with the one engine version they all declare. Edit `.projenrc.ts` and run
 
 ## Releases
 
-One repo-wide semver tag, `vX.Y.Z`, on `main` covers every module; consumers pin
-`github.com/langri-sha/dagger/<module>@vX.Y.Z`. Pushing the tag creates its
-GitHub Release with generated notes (`.github/workflows/release.yml`).
+Changesets versions the repo as a whole, so the bump covers every module. A
+release is cut by dispatching the Release workflow: it consumes the change
+files, commits the version bump and changelog to `main`, tags `vX.Y.Z` and
+creates the GitHub Release. Consumers pin
+`github.com/langri-sha/dagger/<module>@vX.Y.Z`. Never tag by hand.
 
 ## Root commands
 
