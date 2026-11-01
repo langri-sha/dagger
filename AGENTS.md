@@ -19,8 +19,29 @@ option with the one engine version they all declare. Edit `.projenrc.ts` and run
 
 ## Releases
 
-Changesets versions the repo as a whole, so the bump covers every module. A
-release is cut by dispatching the Release workflow: it consumes the change
+Every pull request carries a change file, from `pnpm changeset` or written by
+hand:
+
+<!-- prettier-ignore -->
+```md
+---
+"dagger": minor
+---
+
+Summary
+```
+
+The package is the repo as a whole, so the bump covers every module:
+
+- **major:** a breaking change to a module's interface.
+- **minor:** a new module or feature.
+- **patch:** fixes.
+
+Changes that release nothing, such as dependency and tooling updates, get an
+empty change file (`pnpm exec changeset --empty`), which Renovate pull requests
+receive automatically.
+
+A release is cut by dispatching the Release workflow: it consumes the change
 files, commits the version bump and changelog to `main`, tags `vX.Y.Z` and
 creates the GitHub Release. Consumers pin
 `github.com/langri-sha/dagger/<module>@vX.Y.Z`. Never tag by hand.
@@ -40,7 +61,7 @@ projen/testdata/test.sh      # synthesize a fixture projen project with the proj
 terraform/testdata/test.sh   # check a fixture Terraform root with the terraform module; needs `dagger`
 typescript/testdata/test.sh  # install a fixture workspace in layers and run its prepublishOnly scripts with the typescript module; needs `dagger`
 vitest/testdata/test.sh      # run fixture Vitest suites with the vitest module; needs `dagger`
-dagger check                 # what CI runs: Prettier, projen through ./projen, and the package checks through ./ci
+dagger check                 # what CI runs: Prettier, projen through ./projen, and the package checks through ./ci; the change-file checks through ./changesets fail locally without the `.merge-base` that langri-sha/github's merge-base action writes
 ```
 
 ## Conventions
