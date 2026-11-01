@@ -1,0 +1,8 @@
+{
+  "name": "scripted",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepublishOnly": "node prepublish.js"
+  }
+}

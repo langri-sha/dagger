@@ -1,6 +1,7 @@
 """
-Type-checks for pnpm workspaces: every TypeScript project reference, built with
-the `tsc` the lock file installs.
+Checks for pnpm workspaces: every TypeScript project reference, built with the
+`tsc` the lock file installs, and, when opted in, every package's
+`prepublishOnly` build.
 """
 type Typescript {
   """
@@ -19,14 +20,22 @@ type Typescript {
   """
   pub projects: [String!]!
 
+  """
+  Whether the `publishable` check does anything. It is off unless a consumer
+  opts in: `prepublishOnly` scripts build and may have side effects.
+  """
+  pub prepublish: Boolean!
+
   new(
     ws: Workspace!,
     baseImageAddress: String! = "node:24-slim",
     projects: [String!]! = ["."],
+    prepublish: Boolean! = false,
   ) {
     self.source = ws.directory("/", exclude: installed)
     self.baseImageAddress = baseImageAddress
     self.projects = projects
+    self.prepublish = prepublish
     self
   }
 
@@ -35,6 +44,29 @@ type Typescript {
   """
   pub typeCheck: Void @check {
     base.withExec(["pnpm", "exec", "tsc", "--build"] + projects).sync
+
+    null
+  }
+
+  """
+  Run the `prepublishOnly` script of every package that has one, the workspace
+  root included, as publishing would. A change that only breaks that build
+  otherwise passes the checks and fails the release. Does nothing unless
+  `prepublish` is set.
+  """
+  pub publishable: Void @check {
+    if (prepublish) {
+      base
+        .withExec([
+          "pnpm",
+          "-r",
+          "--if-present",
+          "--include-workspace-root",
+          "run",
+          "prepublishOnly",
+        ])
+        .sync
+    }
 
     null
   }
