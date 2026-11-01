@@ -17,6 +17,9 @@ const project = new Project({
     repository: 'langri-sha/dagger',
     type: 'module',
   },
+  changesets: {
+    config: { privatePackages: { version: true, tag: true } },
+  },
   claude: {
     settings: {
       attribution: { commit: '', pr: '', sessionUrl: false },

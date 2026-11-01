@@ -35,6 +35,8 @@ node_modules/
 !/vitest/dagger-module.toml
 !/prettier.config.js
 !/.prettierignore
+!/.changeset
+!/.changeset/config.json
 !/.claude
 /.claude/settings.local.json
 !/.claude/settings.json
