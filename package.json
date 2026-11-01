@@ -21,6 +21,7 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
+    "changeset": "projen changeset",
     "default": "projen default",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -30,6 +31,7 @@
     "worktrunk:show": "projen worktrunk:show"
   },
   "devDependencies": {
+    "@changesets/cli": "3.0.3",
     "@langri-sha/prettier": "0.4.11",
     "@langri-sha/projen-project": "^0.48.0",
     "prettier": "3.9.9",
