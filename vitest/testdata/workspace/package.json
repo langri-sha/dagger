@@ -4,6 +4,6 @@
   "type": "module",
   "packageManager": "pnpm@12.16.1",
   "devDependencies": {
-    "vitest": "5.0.5"
+    "vitest": "5.1.0"
   }
 }
