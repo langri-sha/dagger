@@ -169,8 +169,8 @@ importers:
   packages/library:
     devDependencies:
       jsii:
-        specifier: 6.0.19
-        version: 6.0.19(supports-color@7.2.0)
+        specifier: 6.0.20
+        version: 6.0.20(supports-color@7.2.0)
 
   packages/scripted: {}
 
@@ -264,8 +264,8 @@ packages:
     resolution: {integrity: sha512-zymm5+u+sCsSWyD9qNaejV3DFvhCKclKdizYaJUuHA83RLjb7nSuGnddCHGv0hk+KY7BMAlsWeK4Ueg6EV6XQg==}
     engines: {node: '>=8'}
 
-  jsii@6.0.19:
-    resolution: {integrity: sha512-EKpAyhEpwSI8Vq2CEXISGITXk2urJmdDD25O6nXLE9njysiBlQkWXlCeten57KRzoBn7HdqOCmacnBqLe+Uk3w==}
+  jsii@6.0.20:
+    resolution: {integrity: sha512-E+EadEU/WIlqat3gTi+Oj1mptH68+O8KWQGAOrufCXkxqL528KbS59y233nuSZqW5RPpbDPCdKuVZ2CxxxCJSQ==}
     engines: {node: '>= 20.16.0'}
     hasBin: true
 
@@ -418,7 +418,7 @@ snapshots:
 
   is-fullwidth-code-point@3.0.0: {}
 
-  jsii@6.0.19(supports-color@7.2.0):
+  jsii@6.0.20(supports-color@7.2.0):
     dependencies:
       '@jsii/check-node': 1.142.0
       '@jsii/spec': 1.142.0
