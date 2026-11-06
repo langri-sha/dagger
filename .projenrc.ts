@@ -29,7 +29,7 @@ const project = new Project({
     '*': '@langri-sha',
   },
   dagger: {
-    engineVersion: 'v1.0.0-beta.23',
+    engineVersion: 'v1.0.0-beta.24',
     modules: {
       actionlint: {},
       beachball: {},
