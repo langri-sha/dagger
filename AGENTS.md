@@ -6,7 +6,8 @@ Context for AI coding agents working in this repo.
 
 A repository of reusable Dagger modules: Dang modules for Dagger 1.0, one per
 top-level directory (`actionlint/`, `beachball/`, `cargo/`, `changesets/`,
-`ci/`, `next/`, `nginx/`, `projen/`, `terraform/`, `typescript/`, `vitest/`).
+`ci/`, `next/`, `nginx/`, `projen/`, `terraform/`, `typescript/`, `vitest/`,
+`zig/`).
 
 ## Who owns which file
 
@@ -61,6 +62,7 @@ projen/testdata/test.sh      # synthesize a fixture projen project with the proj
 terraform/testdata/test.sh   # check a fixture Terraform root with the terraform module; needs `dagger`
 typescript/testdata/test.sh  # install a fixture workspace in layers and run its prepublishOnly scripts with the typescript module; needs `dagger`
 vitest/testdata/test.sh      # run fixture Vitest suites with the vitest module; needs `dagger`
+zig/testdata/test.sh         # build and test fixture Zig projects with the zig module; needs `dagger`
 dagger check                 # what CI runs: Prettier, projen through ./projen, and the package checks through ./ci; the change-file checks through ./changesets fail locally without the `.merge-base` that langri-sha/github's merge-base action writes
 ```
 
