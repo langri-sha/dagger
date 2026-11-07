@@ -36,7 +36,7 @@
     "@langri-sha/projen-project": "^0.51.0",
     "prettier": "3.9.9",
     "projen": "0.104.1",
-    "skills": "1.7.5",
+    "skills": "1.7.6",
     "tsx": "4.23.15"
   },
   "packageManager": "pnpm@12.17.0",
