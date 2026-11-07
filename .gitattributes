@@ -33,4 +33,5 @@
 /terraform/dagger-module.toml linguist-generated
 /typescript/dagger-module.toml linguist-generated
 /vitest/dagger-module.toml linguist-generated
+/zig/dagger-module.toml linguist-generated
 readme text=auto linguist-language=Markdown

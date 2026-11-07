@@ -49,6 +49,7 @@ const project = new Project({
       vitest: {
         dependencies: ['../typescript'],
       },
+      zig: {},
     },
   },
   editorConfig: {},
