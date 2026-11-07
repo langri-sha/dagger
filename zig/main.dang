@@ -1,0 +1,142 @@
+"""
+Checks for a Zig project: `zig build test` and a configurable `zig build`, on
+the official Zig release the module pins, and the toolchain container they run
+in.
+"""
+type Zig {
+  """
+  The project source, without what building creates.
+  """
+  pub source: Directory!
+
+  """
+  The Zig release to run, as `major.minor.patch`: at least 0.14.1, where the
+  release tarballs' names settled on the architecture first. Defaults to the
+  release the module pins.
+  """
+  pub version: String!
+
+  """
+  The base image to put the toolchain on. It needs CA certificates, for the
+  dependencies `zig build` fetches.
+  """
+  pub baseImageAddress: String!
+
+  """
+  The build steps the `build` check runs. Empty runs the default step.
+  """
+  pub steps: [String!]!
+
+  """
+  Further arguments to every `zig build`, such as `-Doptimize=ReleaseSafe`.
+  """
+  pub args: [String!]!
+
+  """
+  Names the local cache volume. Projects that share a key share, and keep
+  growing, one cache, so the default is the workspace's address.
+  """
+  pub cacheKey: String!
+
+  new(
+    ws: Workspace!,
+    version: String! = "",
+    baseImageAddress: String! = "alpine:3",
+    steps: [String!]! = [],
+    args: [String!]! = [],
+    cacheKey: String! = "",
+  ) {
+    if (version != "") {
+      let parts = version.split(".")
+      if (parts.length != 3) {
+        raise "version " + version + " must be a release such as 0.15.2"
+      }
+      parts.each { part =>
+        if (part == "" or part.trim("0123456789") != "") {
+          raise "version " + version + " must be a release such as 0.15.2"
+        }
+      }
+    }
+    self.source = ws.directory("/", exclude: built)
+    self.version = if (version == "") { defaultVersion } else { version }
+    self.baseImageAddress = baseImageAddress
+    self.steps = steps
+    self.args = args
+    self.cacheKey = if (cacheKey == "") { ws.address } else { cacheKey }
+    self
+  }
+
+  """
+  Run the project's tests with `zig build test`.
+  """
+  pub test: Void @check {
+    project.withExec(["zig", "build", "test"] + args).sync
+
+    null
+  }
+
+  """
+  Run `zig build` with the configured steps.
+  """
+  pub build: Void @check {
+    project.withExec(["zig", "build"] + steps + args).sync
+
+    null
+  }
+
+  """
+  The project on the toolchain, to run anything else Zig can do:
+
+      dagger call zig environment with-exec --args=zig,build,run terminal
+  """
+  pub environment: Container! {
+    project
+  }
+
+  """
+  Paths that building creates.
+  """
+  let built: [String!]! = [
+    "**/.zig-cache",
+    "**/zig-cache",
+    "**/zig-out",
+  ]
+
+  # renovate: datasource=git-tags depName=https://codeberg.org/ziglang/zig
+  let defaultVersion: String! = "0.15.2"
+
+  """
+  The Zig release, unpacked. Zig signs its tarballs with a minisign key, which
+  `ziglang.org/download` publishes, and names the signed file in the trusted
+  comment that signature covers. Both are checked, so a valid signature over
+  another file can't pass.
+  """
+  let toolchain: Directory! {
+    container
+      .from("alpine:3")
+      .withExec(["apk", "add", "--no-cache", "curl", "minisign"])
+      .withEnvVariable("ZIG_VERSION", version)
+      .withFile("/fetch-toolchain.sh", currentModule.source.file("fetch-toolchain.sh"))
+      .withFile("/verify-toolchain.sh", currentModule.source.file("verify-toolchain.sh"))
+      .withExec(["sh", "/fetch-toolchain.sh"])
+      .directory("/opt/zig")
+  }
+
+  """
+  The project on the toolchain. Zig's global cache holds the dependencies it
+  fetches and its local cache the build's own artifacts. Both are content
+  addressed, and Zig locks them itself while the checks run side by side.
+  """
+  let project: Container! {
+    container
+      .from(baseImageAddress)
+      .withDirectory("/opt/zig", toolchain)
+      .withEnvVariable("PATH", "/opt/zig:$PATH", expand: true)
+      .withMountedCache("/zig/global", cacheVolume("zig-global"))
+      .withEnvVariable("ZIG_GLOBAL_CACHE_DIR", "/zig/global")
+      .withMountedCache("/zig/local", cacheVolume("zig-local-" + cacheKey))
+      .withEnvVariable("ZIG_LOCAL_CACHE_DIR", "/zig/local")
+      .withDirectory("/src", source)
+      .withWorkdir("/src")
+  }
+}

@@ -33,6 +33,7 @@ node_modules/
 !/terraform/dagger-module.toml
 !/typescript/dagger-module.toml
 !/vitest/dagger-module.toml
+!/zig/dagger-module.toml
 !/prettier.config.js
 !/.prettierignore
 !/.changeset
