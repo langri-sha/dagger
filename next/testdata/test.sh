@@ -77,6 +77,11 @@ test ! -e "$scratch/builds-out/cache"
 fixture keyed-cache '"GREETING=Hello from the fixture"' 'cacheKey = "site-docs"'
 mounts_cache keyed-cache next-site-docs
 
+fixture references '"GREETING=Hello from the fixture"'
+sed -i 's|app = "apps/site"|app = "apps/linked"|' "$scratch/references/dagger.toml"
+passes references
+exports references index.html "Hello from the fixture"
+
 secret_page() {
   printf "export default function Page() {\n  return <p>{process.env.API_TOKEN ? 'token loaded' : 'token missing'}</p>\n}\n" >"$scratch/$1/apps/site/app/page.jsx"
 }
