@@ -11,16 +11,16 @@ and CA certificates installed on top, which the slim image lacks.
 
 `dagger check` runs it as `projen/synth/stale`, which fails when synthesis or
 the lock file refresh would change a file git tracks. projen's tasks are left to
-the [typescript](../typescript/readme.md) and [vitest](../vitest/readme.md)
-modules and to ESLint's. Apply its changes from the workspace root:
+the [typescript] and [vitest] modules and to ESLint's. Apply its changes from
+the workspace root:
 
 ```sh
 dagger generate -y projen
 ```
 
-It builds on the [typescript](../typescript/readme.md) module's install of the
-workspace and uses that module's pnpm store. Both default to `node:24-slim`, so
-with the defaults `dagger check` installs the workspace once for the two.
+It builds on the [typescript] module's install of the workspace and uses that
+module's pnpm store. Both default to `node:24-slim`, so with the defaults
+`dagger check` installs the workspace once for the two.
 
 ```toml
 [modules.projen]
@@ -29,3 +29,6 @@ source = "github.com/langri-sha/dagger/projen@v1.5.0"
 [modules.projen.settings]
 baseImageAddress = "node:24-slim" # default
 ```
+
+[typescript]: ../typescript/readme.md
+[vitest]: ../vitest/readme.md
