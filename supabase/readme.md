@@ -1,6 +1,6 @@
 # supabase
 
-Pushes a Supabase project's migrations and deploys its Edge Functions with the
+Pushes a [Supabase] project's migrations and deploys its Edge Functions with the
 Supabase CLI, which the module's `Dockerfile` pins and Renovate updates. The
 project is the `project_id` in `supabase/config.toml`. Both are functions that
 take the access token as a `Secret`, so it stays out of the logs and the cache,
@@ -25,3 +25,5 @@ source = "github.com/langri-sha/dagger/supabase@v1.6.0"
 [modules.supabase.settings]
 project = "apps/web" # default: .
 ```
+
+[supabase]: https://supabase.com/docs

@@ -1,6 +1,6 @@
 # vitest
 
-Runs a pnpm workspace's Vitest suite with `pnpm exec vitest run`, using the
+Runs a [pnpm] workspace's [Vitest] suite with `pnpm exec vitest run`, using the
 Vitest version the lock file installs, and fails on any failing test. It builds
 on the [typescript] module's install of the workspace, so `prepare` scripts have
 generated their files and the workspace's tools are on the `PATH`. `projects`
@@ -20,3 +20,5 @@ filters = ["functions/"] # default: []
 ```
 
 [typescript]: ../typescript/readme.md
+[vitest]: https://vitest.dev/
+[pnpm]: https://pnpm.io/

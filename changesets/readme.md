@@ -1,6 +1,6 @@
 # changesets
 
-Checks that the changes come with a Changesets change file, running
+Checks that the changes come with a [Changesets] change file, running
 `changeset status` against the merge base. An empty change file, which releases
 nothing, counts. Like the beachball module, it takes the merge base from
 `.merge-base`, which langri-sha/github's `merge-base` action writes from a
@@ -24,3 +24,5 @@ source = "github.com/langri-sha/dagger/changesets@v1.10.0"
 [modules.changesets.settings]
 baseImageAddress = "node:24" # default
 ```
+
+[changesets]: https://github.com/changesets/changesets

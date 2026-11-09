@@ -1,6 +1,6 @@
 # terraform
 
-Checks a Terraform root module — formatting, validation and tests — without
+Checks a [Terraform] root module — formatting, validation and tests — without
 needing cloud credentials, and keeps the provider lock file current. It runs the
 Terraform version the root module pins.
 
@@ -27,3 +27,5 @@ Each root module downloads providers into a cache volume of its own, locked to
 one check at a time, since Terraform's plugin cache isn't safe for concurrent
 writers. Root modules that share a `cacheKey` share that volume and wait on each
 other's checks.
+
+[terraform]: https://developer.hashicorp.com/terraform/docs

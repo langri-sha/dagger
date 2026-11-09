@@ -1,7 +1,7 @@
 # zig
 
-Checks a Zig project: `zig build test` as the `test` check, and `zig build` with
-the `steps` and `args` settings as the `build` check. Zig comes from the
+Checks a [Zig] project: `zig build test` as the `test` check, and `zig build`
+with the `steps` and `args` settings as the `build` check. Zig comes from the
 official release tarball, which the module verifies against the minisign key
 that ziglang.org publishes, and runs on `baseImageAddress`. `version` picks the
 release, as `major.minor.patch` from 0.14.1 on; it defaults to the one the
@@ -29,3 +29,5 @@ cacheKey = "app" # default: the workspace's address
 ```sh
 dagger call zig environment with-exec --args=zig,env stdout
 ```
+
+[zig]: https://ziglang.org/learn/
