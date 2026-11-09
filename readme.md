@@ -51,14 +51,24 @@ The previous TypeScript modules — `hermes`, `hermes-workspace`, `letta-code`,
 `paperclip`, `tailscale` and `tigerfs` — are on the
 [`legacy`](https://github.com/langri-sha/dagger/tree/legacy) branch.
 
-## Working on the repository
-
-Projen manages the repository root and writes each module's `dagger-module.toml`
-from the `dagger` option in `.projenrc.ts`, which also pins the engine version
-for all of them.
+## Development
 
 ```sh
 pnpm install
 pnpm projen   # re-synthesize root config after editing .projenrc.ts
 pnpm format   # prettier --write .
 ```
+
+See [AGENTS.md](./AGENTS.md) for orientation, module checks and the release
+flow.
+
+## Contributing
+
+See [CONTRIBUTING.md] in `langri-sha/github`.
+
+## License
+
+MIT — see [license](./license).
+
+[contributing.md]:
+  https://github.com/langri-sha/github/blob/main/CONTRIBUTING.md
