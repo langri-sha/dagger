@@ -153,8 +153,12 @@ type Next {
       .withMountedCache(".next/cache", cacheVolume("next-" + cacheKey))
       .withEnvVariable("NEXT_TELEMETRY_DISABLED", "1")
 
+    let referenced = configured
+      .withFile("/run/build-references.mjs", currentModule.source.file("build-references.mjs"))
+      .withExec(["node", "/run/build-references.mjs"])
+
     let configuredEnv = environment
-      .reduce(configured) { ctr, variable =>
+      .reduce(referenced) { ctr, variable =>
         let pair = variable.split("=", limit: 2)
         if (pair.length < 2) {
           raise variable + " is not NAME=value."

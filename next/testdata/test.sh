@@ -12,7 +12,7 @@ fixture() {
   mkdir -p "$dir/modules/next" "$dir/modules/typescript"
   cp -r "$here/workspace/." "$dir/"
   git -C "$dir" init --quiet
-  cp "$module/main.dang" "$module/dagger-module.toml" "$module/build-with-secrets.sh" "$dir/modules/next/"
+  cp "$module/main.dang" "$module/dagger-module.toml" "$module/build-with-secrets.sh" "$module/build-references.mjs" "$dir/modules/next/"
   cp "$modules/typescript/main.dang" "$modules/typescript/dagger-module.toml" "$dir/modules/typescript/"
   cat >"$dir/dagger.toml" <<EOF
 [modules.site]
