@@ -88,7 +88,7 @@ secret_page() {
 
 secret_env_fixture() {
   local name=$1
-  fixture "$name" '"GREETING=Hello from the fixture"' "secretEnvFile = \"file:$scratch/$name.env\""
+  fixture "$name" '"GREETING=Hello from the fixture"' "secretEnvFile = \"file://$scratch/$name.env\""
   secret_page "$name"
 }
 
@@ -151,7 +151,7 @@ image_prints standalone "node" "id -un"
 image_prints standalone "no source" "test ! -e /src && echo no source"
 
 printf 'API_TOKEN=s3cret value=with-equals\n' >"$scratch/secret-standalone.env"
-standalone_fixture secret-standalone "secretEnvFile = \"file:$scratch/secret-standalone.env\""
+standalone_fixture secret-standalone "secretEnvFile = \"file://$scratch/secret-standalone.env\""
 secret_page secret-standalone
 image_prints secret-standalone "token loaded" "$(serve_and_fetch /)"
 image_prints secret-standalone "no secret" "grep -rqF 's3cret value' /app && echo leaked || echo no secret"
