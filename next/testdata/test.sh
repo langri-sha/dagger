@@ -60,6 +60,7 @@ exports() {
 mounts_cache() {
   local name=$1 key=$2 output
   echo "== $name: the build mounts the cache volume $key"
+  sed -i "s|^environment = \\[|&\"CACHE_BUST=$RANDOM$RANDOM\", |" "$scratch/$name/dagger.toml"
   output=$(cd "$scratch/$name" && dagger --progress=plain -vvv check 2>&1)
   grep -qF "cacheVolume(key: \"$key\"" <<<"$output" || {
     echo "$output" >&2
