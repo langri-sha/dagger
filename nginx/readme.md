@@ -1,6 +1,6 @@
 # nginx
 
-Builds an nginx image from a Docker context and checks it as a JSON spec
+Builds an [nginx] image from a [Docker] context and checks it as a JSON spec
 declares. `config` runs `nginx -t` through the image's entrypoint, so its
 templates are rendered. `responses` runs each scenario: the image as a service,
 the requests sent to it, and its stdout and stderr, as `docker logs` shows them.
@@ -76,3 +76,5 @@ dagger call web-image --content apps/web/dist --variables BASE_PATH=/pull/7 veri
 ```
 
 [next]: ../next/readme.md
+[nginx]: https://nginx.org/en/docs/
+[docker]: https://docs.docker.com/

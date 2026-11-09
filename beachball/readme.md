@@ -1,6 +1,6 @@
 # beachball
 
-Checks that every changed package in a pnpm workspace has a Beachball change
+Checks that every changed package in a [pnpm] workspace has a [Beachball] change
 file, and writes the missing ones with `message` and `type`. Beachball compares
 HEAD to its merge base with the base branch. The module takes both from
 `.merge-base`, which langri-sha/github's `merge-base` action writes from a
@@ -23,3 +23,6 @@ source = "github.com/langri-sha/dagger/beachball@v1.0.0"
 baseImageAddress = "node:24" # default
 authorEmail = "renovate@example.com" # default: unset
 ```
+
+[beachball]: https://microsoft.github.io/beachball/
+[pnpm]: https://pnpm.io/

@@ -1,7 +1,7 @@
 # projen
 
-Synthesizes a projen project in a pnpm workspace with the projen the lock file
-installs. Its `synth` generator synthesizes, installs with the lock file
+Synthesizes a [projen] project in a [pnpm] workspace with the projen the lock
+file installs. Its `synth` generator synthesizes, installs with the lock file
 unfrozen, synthesizes again and installs once more, so an upgraded projen
 component writes its own output and the lock file follows what synthesis
 changed. The first synthesis skips post-synthesis, which in CI installs with a
@@ -32,3 +32,5 @@ baseImageAddress = "node:24-slim" # default
 
 [typescript]: ../typescript/readme.md
 [vitest]: ../vitest/readme.md
+[projen]: https://projen.io/
+[pnpm]: https://pnpm.io/

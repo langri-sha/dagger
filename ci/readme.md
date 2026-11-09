@@ -1,9 +1,10 @@
 # ci
 
-Generators and fixes for pnpm workspaces that Dagger's official modules don't
-cover: the generators re-run projen and tidy the `package.json` files, `fix`
-applies ESLint and Prettier fixes, and `snapshots` updates Vitest snapshots.
-Type-checking is in [typescript].
+Generators and fixes for [pnpm] workspaces that [Dagger]'s official modules
+don't cover: the generators re-run [projen][projen-site] and tidy the
+`package.json` files, `fix` applies [ESLint][eslint-site] and
+[Prettier][prettier-site] fixes, and `snapshots` updates [Vitest][vitest-site]
+snapshots. Type-checking is in [typescript].
 
 `projen` runs the steps of the [projen] module's `synth` on `ci`'s install of
 the workspace, for workspaces that don't install that module.
@@ -71,3 +72,9 @@ baseImageAddress = "node:24" # default
 [prettier]: https://github.com/dagger/prettier
 [vitest]: https://github.com/dagger/vitest
 [beachball]: ../beachball/readme.md
+[dagger]: https://dagger.io/
+[projen-site]: https://projen.io/
+[eslint-site]: https://eslint.org/
+[vitest-site]: https://vitest.dev/
+[pnpm]: https://pnpm.io/
+[prettier-site]: https://prettier.io/

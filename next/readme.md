@@ -1,7 +1,7 @@
 # next
 
-Builds a Next.js app in a pnpm workspace with the `next` the lock file installs,
-keeping Next's build cache between runs, and returns the build output;
+Builds a [Next.js] app in a [pnpm] workspace with the `next` the lock file
+installs, keeping Next's build cache between runs, and returns the build output;
 `dagger check` checks that it builds. It builds on the [typescript] module's
 install of the workspace. Install it once per app.
 
@@ -48,3 +48,5 @@ dagger call web runtime --runtime-image-address=node:24-slim publish --address=g
 ```
 
 [typescript]: ../typescript/readme.md
+[next.js]: https://nextjs.org/docs
+[pnpm]: https://pnpm.io/

@@ -1,8 +1,8 @@
 # typescript
 
-Type-checks a pnpm workspace's project references with `tsc --build`, using the
-TypeScript version the lock file installs. `projects` lists what to build, for
-tsconfig files the root one doesn't reference.
+Type-checks a [pnpm] workspace's project references with `tsc --build`, using
+the [TypeScript] version the lock file installs. `projects` lists what to build,
+for tsconfig files the root one doesn't reference.
 
 The install runs in layers: the lock file, pnpm's settings, patches and every
 workspace manifest install the dependencies and build them, and only then comes
@@ -24,3 +24,6 @@ baseImageAddress = "node:24-slim" # default
 projects = ["."] # default
 prepublish = false # default
 ```
+
+[typescript]: https://www.typescriptlang.org/docs/
+[pnpm]: https://pnpm.io/
