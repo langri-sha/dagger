@@ -7,9 +7,9 @@ take the access token as a `Secret`, so it stays out of the logs and the cache,
 and both fail when the CLI does:
 
 ```sh
-dagger call migrate --token=env:SUPABASE_ACCESS_TOKEN
-dagger call migrate --token=env:SUPABASE_ACCESS_TOKEN --db-password=env:SUPABASE_DB_PASSWORD
-dagger call deploy --token=env:SUPABASE_ACCESS_TOKEN
+dagger call migrate --token=env://SUPABASE_ACCESS_TOKEN
+dagger call migrate --token=env://SUPABASE_ACCESS_TOKEN --db-password=env://SUPABASE_DB_PASSWORD
+dagger call deploy --token=env://SUPABASE_ACCESS_TOKEN
 ```
 
 `migrate` is `supabase db push`; the database password is optional. `deploy`

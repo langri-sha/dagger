@@ -25,12 +25,12 @@ don't share, and keep invalidating, one cache volume.
 
 `secretEnvFile` is a `Secret` whose value is dotenv lines: `NAME=value`, with
 blank lines and `#` comments allowed. The setting takes the provider URI
-(`env:`, `file:`, `op://`, `cmd:`), not the lines. The build reads the lines as
-data, not shell, and exports them in the exec that runs `next build`, from a
-mounted secret, so they never reach a layer, and the module logs nothing from
-them. It fails when the secret has no lines or a line isn't `NAME=value`, naming
-the line by number. The secret's value is part of that exec's cache key, so
-changing it rebuilds. What the build itself prints or writes to the output is
+(`env://`, `file://`, `op://`, `cmd://`), not the lines. The build reads the
+lines as data, not shell, and exports them in the exec that runs `next build`,
+from a mounted secret, so they never reach a layer, and the module logs nothing
+from them. It fails when the secret has no lines or a line isn't `NAME=value`,
+naming the line by number. The secret's value is part of that exec's cache key,
+so changing it rebuilds. What the build itself prints or writes to the output is
 outside the module's control.
 
 `overlay` is a directory laid over the app's directory after the install and
