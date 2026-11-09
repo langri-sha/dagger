@@ -10,9 +10,8 @@ headers and a body, under the hostnames it names, over HTTPS with a self-signed
 certificate that the image's CA bundle can trust. `resolver` names the variable
 the image's `resolver` directive reads, and points it at a DNS server that
 answers those hostnames, as Docker's embedded DNS does. `content` adds built
-files to the context, such as a static export from [next](../next/readme.md)
-through a `dag://` link, and `${NAME}` in the spec takes its value from
-`variables`.
+files to the context, such as a static export from [next] through a `dag://`
+link, and `${NAME}` in the spec takes its value from `variables`.
 
 ```toml
 [modules.web-image]
@@ -75,3 +74,5 @@ per run, or to run checks the workspace skips, call `verify-config` and
 ```sh
 dagger call web-image --content apps/web/dist --variables BASE_PATH=/pull/7 verify-responses
 ```
+
+[next]: ../next/readme.md

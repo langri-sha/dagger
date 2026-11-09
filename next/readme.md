@@ -2,9 +2,8 @@
 
 Builds a Next.js app in a pnpm workspace with the `next` the lock file installs,
 keeping Next's build cache between runs, and returns the build output;
-`dagger check` checks that it builds. It builds on the
-[typescript](../typescript/readme.md) module's install of the workspace. Install
-it once per app.
+`dagger check` checks that it builds. It builds on the [typescript] module's
+install of the workspace. Install it once per app.
 
 ```toml
 [modules.web]
@@ -47,3 +46,5 @@ It fails when the build has no standalone output. The image carries nothing of
 ```sh
 dagger call web runtime --runtime-image-address=node:24-slim publish --address=ghcr.io/acme/web:latest
 ```
+
+[typescript]: ../typescript/readme.md
