@@ -185,8 +185,8 @@ importers:
         specifier: 24.19.2
         version: 24.19.2
       '@types/react':
-        specifier: 19.2.0
-        version: 19.2.0
+        specifier: 19.3.0
+        version: 19.3.0
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -433,8 +433,8 @@ packages:
   '@types/node@24.19.2':
     resolution: {integrity: sha512-93d49wCWJkCyN87MxLpNN6KXPCwFw7bVUg79mGUV1OS40JGWwVCr8n61DXCSqz7CV6/VfPkb7xec7uP2M+QHWQ==}
 
-  '@types/react@19.2.0':
-    resolution: {integrity: sha512-1LOH8xovvsKsCBq1wnT4ntDUdCJKmnEakhsuoUSy6ExlHCkGP2hqnatagYTgFk6oeL0VU31u7SNjunPN+GchtA==}
+  '@types/react@19.3.0':
+    resolution: {integrity: sha512-N0rFCuH9YoxG9/m61l9MfpJKfmLOVU0em7ipIz6TRgSSkvReLB9vL85GB+yr8Bs5leqpvg96JSwF4ZS1s4viQg==}
 
   baseline-browser-mapping@2.11.35:
     resolution: {integrity: sha512-GNk8KX52CHqeNKGk8+7tZnQab/2k1t/BgrUHPKNdijzpEhF1saPQZHVKb6m5loSAxB39gyrTYw34Qf9CQ3u1qQ==}
@@ -689,7 +689,7 @@ snapshots:
     dependencies:
       undici-types: 7.24.6
 
-  '@types/react@19.2.0':
+  '@types/react@19.3.0':
     dependencies:
       csstype: 3.2.3
 
