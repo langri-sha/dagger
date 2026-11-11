@@ -34,7 +34,6 @@
         'prettier',
         'projen',
         'skills',
-        'tsx',
       ],
       enabled: false,
     },
