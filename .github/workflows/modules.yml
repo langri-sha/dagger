@@ -1,0 +1,25 @@
+name: Modules
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      dagger-version: v1.0.0-beta.26
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dagger/dagger-for-github@v8.4.1
+        with:
+          version: ${{ env.dagger-version }}
+      - name: Load every module
+        run: |
+          for manifest in */dagger-module.toml; do
+            dagger functions -m "./${manifest%/*}" > /dev/null
+          done
