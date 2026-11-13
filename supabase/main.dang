@@ -29,8 +29,8 @@ type Supabase {
   pub migrate(
     token: Secret!,
     dbPassword: Secret,
-  ): Void @cache(policy: FunctionCachePolicy.Never) {
-    # @cache(Never) re-runs the function, not its execs. A fresh RUN_ID keeps the
+  ): Void @cache(policy: FunctionCachePolicy.NEVER) {
+    # @cache(NEVER) re-runs the function, not its execs. A fresh RUN_ID keeps the
     # push from replaying out of the layer cache.
     let authenticated = base
       .withSecretVariable("SUPABASE_ACCESS_TOKEN", token)
@@ -53,7 +53,7 @@ type Supabase {
   Deploy every function in `supabase/functions`. The CLI bundles them on
   Supabase's side with `--use-api`, as the container has no Docker.
   """
-  pub deploy(token: Secret!): Void @cache(policy: FunctionCachePolicy.Never) {
+  pub deploy(token: Secret!): Void @cache(policy: FunctionCachePolicy.NEVER) {
     # As in migrate, RUN_ID keeps the deploy out of the layer cache.
     base
       .withSecretVariable("SUPABASE_ACCESS_TOKEN", token)
