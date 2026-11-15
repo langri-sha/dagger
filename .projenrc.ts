@@ -96,7 +96,7 @@ const project = new Project({
 })
 
 project.package?.addField('private', true)
-project.package?.addField('packageManager', 'pnpm@12.19.0')
+project.package?.addField('packageManager', 'pnpm@12.20.0')
 project.package?.addEngine('pnpm', '>= 11.0.0')
 
 project.package?.setScript('format', 'prettier --write .')
