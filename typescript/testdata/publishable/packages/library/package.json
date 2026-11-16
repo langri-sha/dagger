@@ -23,6 +23,6 @@
     "prepublishOnly": "jsii"
   },
   "devDependencies": {
-    "jsii": "6.0.21"
+    "jsii": "6.0.22"
   }
 }
