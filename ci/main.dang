@@ -136,9 +136,10 @@ type Ci {
   let sortPackageJsonVersion: String! = "4.1.0"
 
   """
-  The workspace with its dependencies installed.
+  corepack's pnpm and the workspace's manifests and lock file in `/src`, before
+  anything installs.
   """
-  let base: Container! {
+  let manifests: Container! {
     container
       .from(baseImageAddress)
       .withMountedCache("/pnpm/store", cacheVolume("pnpm-store"))
@@ -152,6 +153,13 @@ type Ci {
       .withWorkdir("/src")
       .withExec(["pnpm", "--version"])
       .withDirectory("/src", installInputs)
+  }
+
+  """
+  The workspace with its dependencies installed.
+  """
+  let base: Container! {
+    manifests
       .withExec(["pnpm", "install", "--frozen-lockfile", "--ignore-scripts"])
       .withExec(["pnpm", "rebuild"])
       .withDirectory("/src", source)
