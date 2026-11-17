@@ -83,10 +83,15 @@ type Typescript {
   }
 
   """
-  Paths that installing and building create. A stale build info would let
-  `tsc --build` skip a project and pass without checking it.
+  Paths that installing and building create, and the repository and the
+  merge base that langri-sha/github's merge-base action writes, whose contents
+  differ between checkouts of the same tree and would re-key every layer built
+  on the source. A stale build info would let `tsc --build` skip a
+  project and pass without checking it.
   """
   let installed: [String!]! = [
+    ".git",
+    ".merge-base",
     "**/node_modules",
     "**/dist",
     "**/.next",

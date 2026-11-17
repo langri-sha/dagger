@@ -31,9 +31,9 @@ dagger call -y ci fix
 `snapshots` runs `vitest run --update --passWithNoTests` when the workspace
 installs Vitest, so it accepts every snapshot that changed. It runs the whole
 suite in the `baseImageAddress` container, without the [vitest] module's build
-step, extra files or Dagger session. The default `node:24` ships git for suites
-that run it; a slim image doesn't. Like `fix`, it's a function, applied from the
-workspace root:
+step, extra files or Dagger session. The default `node:24` ships the git binary
+for suites that run it and a slim image doesn't, but the workspace has no `.git`
+either way. Like `fix`, it's a function, applied from the workspace root:
 
 ```sh
 dagger call -y ci snapshots
