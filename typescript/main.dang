@@ -87,6 +87,7 @@ type Typescript {
   `tsc --build` skip a project and pass without checking it.
   """
   let installed: [String!]! = [
+    ".git",
     "**/node_modules",
     "**/dist",
     "**/.next",

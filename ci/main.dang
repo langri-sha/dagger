@@ -96,6 +96,7 @@ type Ci {
   Paths that installing and building create.
   """
   let installed: [String!]! = [
+    ".git",
     "**/node_modules",
     "**/dist",
     "**/.next",
