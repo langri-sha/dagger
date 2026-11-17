@@ -78,10 +78,14 @@ type Ci {
   }
 
   """
-  Sort and fix the package manifests.
+  Sort and fix the package manifests. It reads only the manifests and the lock
+  file and installs nothing, so a change to any other file leaves it cached.
+  pnpm's dependency verification is off, since it would install before running
+  a command.
   """
   pub packages: Changeset! @generate {
-    base
+    manifests
+      .withEnvVariable("PNPM_CONFIG_VERIFY_DEPS_BEFORE_RUN", "false")
       .withExec([
         "pnpm", "dlx", "sort-package-json@" + sortPackageJsonVersion,
         "package.json", "apps/*/package.json", "packages/*/package.json",

@@ -54,6 +54,28 @@ break_eslint_config() {
   (cd "$dir" && commit -am "Break the ESLint config")
 }
 
+unsort_manifest() {
+  local dir
+  dir=$(workspace "$1")
+  cat >"$dir/package.json" <<'EOF'
+{
+  "devDependencies": {
+    "eslint": "10.14.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-prettier": "5.5.7",
+    "prettier": "3.9.9",
+    "vitest": "5.1.0"
+  },
+  "packageManager": "pnpm@12.21.0",
+  "type": "module",
+  "private": true,
+  "version": "0.0.0",
+  "name": "fixture"
+}
+EOF
+  (cd "$dir" && commit -am "Unsort the manifest")
+}
+
 change_greeting() {
   local dir
   dir=$(workspace "$1")
@@ -65,6 +87,20 @@ passes() {
   local name=$1 check=$2
   echo "== $name: $check passes"
   (cd "$(workspace "$name")" && dagger check "$check")
+}
+
+check_fails_with() {
+  local name=$1 check=$2 message=$3 output
+  echo "== $name: $check fails with: $message"
+  if output=$(cd "$(workspace "$name")" && dagger check "$check" 2>&1); then
+    echo "expected failure" >&2
+    return 1
+  fi
+  grep -qF "$message" <<<"$output" || {
+    echo "$output" >&2
+    echo "missing: $message" >&2
+    return 1
+  }
 }
 
 calls() {
@@ -145,6 +181,16 @@ fixture changed-greeting node
 change_greeting changed-greeting
 calls changed-greeting snapshots
 grep -qF '"Hi, world!"' "$(workspace changed-greeting)/src/__snapshots__/greeting.test.js.snap"
+
+fixture sorted-manifest node
+passes sorted-manifest ci/packages/stale
+
+fixture unsorted-manifest node
+unsort_manifest unsorted-manifest
+check_fails_with unsorted-manifest ci/packages/stale "generated files are not up to date"
+generate unsorted-manifest ci/packages
+diff "$here/node/package.json" "$(workspace unsorted-manifest)/package.json"
+passes unsorted-manifest ci/packages/stale
 
 fixture image-without-git node 'baseImageAddress = "node:24-slim"'
 call_fails_with image-without-git snapshots "spawnSync git ENOENT"
