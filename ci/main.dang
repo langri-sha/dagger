@@ -83,7 +83,7 @@ type Ci {
   pub packages: Changeset! @generate {
     base
       .withExec([
-        "pnpm", "dlx", "sort-package-json@latest",
+        "pnpm", "dlx", "sort-package-json@" + sortPackageJsonVersion,
         "package.json", "apps/*/package.json", "packages/*/package.json",
       ])
       .withExec(["pnpm", "-r", "exec", "npm", "pkg", "fix"])
@@ -131,6 +131,9 @@ type Ci {
 
   # renovate: datasource=npm depName=corepack
   let corepackVersion: String! = "0.36.0"
+
+  # renovate: datasource=npm depName=sort-package-json
+  let sortPackageJsonVersion: String! = "4.1.0"
 
   """
   The workspace with its dependencies installed.
