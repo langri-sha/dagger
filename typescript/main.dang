@@ -128,10 +128,16 @@ type Typescript {
 
   """
   The workspace with its dependencies installed from the lock file, in `/src`.
+  Git and CA certificates, which the slim image lacks, install ahead of the
+  source, with `apt-get` or `apk`, so a change to it doesn't repeat them.
   """
   pub base: Container! {
     container
       .from(baseImageAddress)
+      .withExec([
+        "sh", "-c",
+        "if command -v apt-get >/dev/null; then apt-get update --quiet && apt-get install --yes --quiet --no-install-recommends ca-certificates git && rm -rf /var/lib/apt/lists/*; elif command -v apk >/dev/null; then apk add --no-cache ca-certificates git; else echo 'neither apt-get nor apk to install git with' >&2; exit 1; fi",
+      ])
       .withMountedCache("/pnpm/store", cacheVolume("pnpm-store"))
       .withEnvVariable("PNPM_CONFIG_STORE_DIR", "/pnpm/store")
       .withEnvVariable("COREPACK_ENABLE_DOWNLOAD_PROMPT", "0")

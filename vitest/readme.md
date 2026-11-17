@@ -6,8 +6,8 @@ on the [typescript] module's install of the workspace, so `prepare` scripts have
 generated their files and the workspace's tools are on the `PATH`. `projects`
 picks Vitest projects by name, and `filters` the test files, by substrings of
 their paths. The default image is `node:24-slim`, like the typescript module's,
-so the two share one install; it has no `git`, so a suite that runs it needs
-`node:24`.
+so the two share one install, which has the git binary but, like the typescript
+module's, no `.git`.
 
 ```toml
 [modules.vitest]
