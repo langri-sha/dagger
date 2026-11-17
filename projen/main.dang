@@ -24,25 +24,12 @@ type Projen {
   """
   pub synth: Changeset! @generate {
     tracked(
-      withGit
+      installed
         .withExec(["pnpm", "projen", "--no-post"])
         .withExec(["pnpm", "install", "--no-frozen-lockfile"])
         .withExec(["pnpm", "projen"])
         .withExec(["pnpm", "install", "--no-frozen-lockfile"]),
     ).changes(tracked(installed))
-  }
-
-  """
-  The installed workspace with git and CA certificates, which the slim image
-  lacks.
-  """
-  let withGit: Container! {
-    installed
-      .withExec(["apt-get", "update", "--quiet"])
-      .withExec([
-        "apt-get", "install", "--yes", "--quiet", "--no-install-recommends",
-        "ca-certificates", "git",
-      ])
   }
 
   """
