@@ -22,3 +22,6 @@ source = "projen"
 
 [modules.changesets]
 source = "changesets"
+
+[modules.typescript]
+source = "typescript"
