@@ -14,6 +14,9 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Register the typescript module
+        run: printf '\n[modules.typescript]\nsource = "typescript"\n' >> dagger.toml
+
       - name: typescript source
         uses: dagger/dagger-for-github@v8.4.1
         with:
@@ -22,8 +25,4 @@ jobs:
           args: typescript source glob --pattern='.git/HEAD'
 
       - name: ci source
-        uses: dagger/dagger-for-github@v8.4.1
-        with:
-          version: v1.0.0-beta.27
-          verb: call
-          args: ci source glob --pattern='.git/HEAD'
+        run: dagger call ci source glob --pattern='.git/HEAD'
