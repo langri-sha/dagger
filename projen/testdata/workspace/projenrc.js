@@ -11,7 +11,7 @@ const pkg = new javascript.NodePackage(project, {
   devDeps: ['constructs@10.8.1', 'projen@0.104.31', 'stamp@file:stamp-1'],
 })
 
-pkg.addField('packageManager', 'pnpm@12.20.0')
+pkg.addField('packageManager', 'pnpm@12.21.0')
 
 project.defaultTask.exec('node projenrc.js')
 
