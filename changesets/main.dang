@@ -157,11 +157,11 @@ type Changesets {
         exit 1
       fi
       if ! blob=$(git rev-parse --verify --quiet ":$path"); then
-        printf '100644 %s\t%s\0' "$(git hash-object -w --stdin < /dev/null)" "$path"
+        printf '100644 %s\\t%s\\0' "$(git hash-object -w --stdin < /dev/null)" "$path"
       elif [[ $status == A ]]; then
-        printf '0 %040d\t%s\0' 0 "$path"
+        printf '0 %040d\\t%s\\0' 0 "$path"
       else
-        printf '100644 %s\t%s\0' "$({ git cat-file blob "$blob"; echo; } | git hash-object -w --stdin)" "$path"
+        printf '100644 %s\\t%s\\0' "$({ git cat-file blob "$blob"; echo; } | git hash-object -w --stdin)" "$path"
       fi
     done < /merge-base/changes | git update-index -z --index-info
 
