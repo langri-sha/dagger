@@ -78,12 +78,16 @@ type Ci {
   }
 
   """
-  Sort and fix the package manifests.
+  Sort and fix the package manifests. It reads only the manifests and the lock
+  file and installs nothing, so a change to any other file leaves it cached.
+  pnpm's dependency verification is off, since it would install before running
+  a command.
   """
   pub packages: Changeset! @generate {
-    base
+    manifests
+      .withEnvVariable("PNPM_CONFIG_VERIFY_DEPS_BEFORE_RUN", "false")
       .withExec([
-        "pnpm", "dlx", "sort-package-json@latest",
+        "pnpm", "dlx", "sort-package-json@" + sortPackageJsonVersion,
         "package.json", "apps/*/package.json", "packages/*/package.json",
       ])
       .withExec(["pnpm", "-r", "exec", "npm", "pkg", "fix"])
@@ -132,10 +136,14 @@ type Ci {
   # renovate: datasource=npm depName=corepack
   let corepackVersion: String! = "0.36.0"
 
+  # renovate: datasource=npm depName=sort-package-json
+  let sortPackageJsonVersion: String! = "4.1.0"
+
   """
-  The workspace with its dependencies installed.
+  corepack's pnpm and the workspace's manifests and lock file in `/src`, before
+  anything installs.
   """
-  let base: Container! {
+  let manifests: Container! {
     container
       .from(baseImageAddress)
       .withMountedCache("/pnpm/store", cacheVolume("pnpm-store"))
@@ -149,6 +157,13 @@ type Ci {
       .withWorkdir("/src")
       .withExec(["pnpm", "--version"])
       .withDirectory("/src", installInputs)
+  }
+
+  """
+  The workspace with its dependencies installed.
+  """
+  let base: Container! {
+    manifests
       .withExec(["pnpm", "install", "--frozen-lockfile", "--ignore-scripts"])
       .withExec(["pnpm", "rebuild"])
       .withDirectory("/src", source)
