@@ -1,0 +1,7 @@
+{
+  "name": "dagger-scope",
+  "private": true,
+  "dependencies": {
+    "picomatch": "4.0.7"
+  }
+}
