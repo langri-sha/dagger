@@ -98,15 +98,20 @@ resolve "$scratch/repo" | jq -e '
   .args == [] and (.summary | contains("manifest changed"))
 ' >/dev/null
 
-git switch -q -c older-manifest pr
-sed -i 's/"docs\/\*\*\/\*"/"{docs\/\*\*,notes\/\*\*}"/' ci/scope.json
-git commit -qam "Use a brace alternative"
-git switch -qc docs-change
-printf 'notes\n' >README.md
-git commit -qam "Change Markdown"
-git switch -q older-manifest
-git merge -q --no-ff --no-edit docs-change
+for unsupported in '{docs/**,notes/**}' 'docs/**/**'; do
+  git switch -q --detach pr
+  jq --arg pattern "$unsupported" '.[1].globs[-1] = $pattern' ci/scope.json >"$scratch/rules.json"
+  cp "$scratch/rules.json" ci/scope.json
+  git commit -qam "Use an unsupported pattern"
+  base=$(git rev-parse HEAD)
 
-resolve "$scratch/repo" | jq -e '
-  .args == [] and (.summary | contains("Unsupported scope glob"))
-' >/dev/null
+  printf 'notes\n' >README.md
+  git commit -qam "Change Markdown"
+  head=$(git rev-parse HEAD)
+  git switch -q --detach "$base"
+  git merge -q --no-ff --no-edit "$head"
+
+  resolve "$scratch/repo" | jq -e '
+    .args == [] and (.summary | contains("Unsupported scope glob"))
+  ' >/dev/null
+done

@@ -142,6 +142,7 @@ type Scope {
       Regexp(`^.+$`)
     } else {
       if (glob.containsMatch(`[?!{}\[\]\\()[:cntrl:]]`) or
+          glob.containsMatch(`(^|/)\*\*/\*\*(/|$)`) or
           glob.split("/").any { segment => segment == "" or (segment != "**" and segment.contains("**")) }) {
         raise "Unsupported scope glob " + glob
       }
