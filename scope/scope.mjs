@@ -4,12 +4,15 @@ import picomatch from 'picomatch'
 
 const checkName =
   /^[a-zA-Z0-9_][a-zA-Z0-9._-]*(?:\/[a-zA-Z0-9_][a-zA-Z0-9._-]*)*$/
+
 function checkNames(links, main) {
   return links.map((link) => {
     const name = new URL(link).searchParams.get('check')
+
     if (!name || !checkName.test(name)) {
       throw new Error('Invalid Dagger check name')
     }
+
     // Loading the resolver with -m qualifies the workspace's main checks.
     return main && name.startsWith(`${main}/`)
       ? name.slice(main.length + 1)
@@ -23,9 +26,11 @@ function expand(selector, names) {
       name === selector ||
       (!selector.includes('/') && name.startsWith(`${selector}/`)),
   )
+
   if (!checks.length) {
     throw new Error(`No Dagger check matches ${selector}`)
   }
+
   return checks
 }
 
@@ -33,35 +38,46 @@ function select(rules, paths, names, always) {
   if (!Array.isArray(rules) || rules.at(-1)?.glob !== '**') {
     throw new Error('Expected a rule list ending in a ** catch-all')
   }
+
   const matchers = rules.map((rule) => {
     const { glob, affects: { checks } = {} } = rule
+
     if (typeof glob !== 'string' || !glob || !Array.isArray(checks)) {
       throw new Error('Invalid scope rule')
     }
+
     const selectors = checks.flatMap((id) => {
       if (id === '*') return [id]
+
       if (typeof id !== 'string' || !checkName.test(id)) {
         throw new Error('Invalid Dagger check selector')
       }
+
       return expand(id, names)
     })
+
     return { glob, matches: picomatch(glob, { dot: true }), selectors }
   })
+
   if (!matchers.at(-1).selectors.includes('*')) {
     throw new Error('The catch-all must select every check')
   }
 
   if (!paths.length) return { reason: 'The changed path list is empty' }
+
   const selected = new Set(always.flatMap((id) => expand(id, names)))
   const matched = new Set()
+
   for (const path of paths) {
     if (path === 'ci/scope.json') {
       return { reason: 'The scope manifest changed' }
     }
+
     const rule = matchers.find(({ matches }) => matches(path))
     if (!rule || rule.selectors.includes('*')) {
       return { reason: 'A changed path requires the full check suite' }
     }
+
     rule.selectors.forEach((id) => selected.add(id))
     matched.add(rule.glob)
   }
@@ -90,6 +106,7 @@ try {
   )
     .trim()
     .split(' ')
+
   if (merge !== mergeSha || !base || !head || head !== headSha || extraParent) {
     throw new Error(
       'The workspace does not match the expected pull request merge commit',
@@ -108,6 +125,7 @@ try {
   )
     .split('\0')
     .filter(Boolean)
+
   result = select(
     rules,
     paths,
