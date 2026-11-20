@@ -6,7 +6,7 @@ Context for AI coding agents working in this repo.
 
 A repository of reusable Dagger modules: Dang modules for Dagger 1.0, one per
 top-level directory (`actionlint/`, `beachball/`, `cargo/`, `changesets/`,
-`ci/`, `next/`, `nginx/`, `projen/`, `terraform/`, `typescript/`, `vitest/`,
+`ci/`, `next/`, `nginx/`, `projen/`, `scope/`, `terraform/`, `typescript/`, `vitest/`,
 `zig/`).
 
 ## Who owns which file
@@ -59,6 +59,7 @@ ci/testdata/test.sh          # run the ci module on throwaway fixtures; needs `d
 next/testdata/test.sh        # build a fixture Next.js app with the next module; needs `dagger`
 nginx/testdata/test.sh       # check a fixture nginx image with the nginx module; needs `dagger`
 projen/testdata/test.sh      # synthesize a fixture projen project with the projen module; needs `dagger`
+scope/testdata/test.sh       # resolve scope from fixture rules; needs `dagger` and `jq`
 terraform/testdata/test.sh   # check a fixture Terraform root with the terraform module; needs `dagger`
 typescript/testdata/test.sh  # install a fixture workspace in layers and run its prepublishOnly scripts with the typescript module; needs `dagger`
 vitest/testdata/test.sh      # run fixture Vitest suites with the vitest module; needs `dagger`

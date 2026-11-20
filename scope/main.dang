@@ -1,0 +1,41 @@
+"""
+Resolve the Dagger checks a change puts in scope using first-match path rules.
+"""
+type Scope {
+  """
+  Return JSON with the CLI arguments to pass to dagger check and a Markdown
+  summary. An empty argument list means run the full suite.
+  """
+  pub resolve(
+    """
+    The ci/scope.json rules from the tested base commit.
+    """
+    rules: File!,
+    """
+    NUL-delimited records from git diff --name-status --no-renames -z.
+    """
+    changes: File!,
+    """
+    The list printed by dagger check -l -f link in the tested workspace.
+    """
+    checks: File!,
+    """
+    Check names or modules to include on every scoped run.
+    """
+    always: [String!]! = [],
+  ): String! {
+    container
+      .from("node:24-slim")
+      .withWorkdir("/scope")
+      .withFile("package.json", currentModule.source.file("package.json"))
+      .withFile("package-lock.json", currentModule.source.file("package-lock.json"))
+      .withExec(["npm", "ci", "--ignore-scripts", "--no-audit", "--no-fund"])
+      .withFile("scope.mjs", currentModule.source.file("scope.mjs"))
+      .withFile("/inputs/rules.json", rules)
+      .withFile("/inputs/changes", changes)
+      .withFile("/inputs/checks", checks)
+      .withNewFile("/inputs/always.json", JSON.encode(always))
+      .withExec(["node", "scope.mjs"])
+      .stdout
+  }
+}
