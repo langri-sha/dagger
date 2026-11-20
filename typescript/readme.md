@@ -4,6 +4,9 @@ Type-checks a [pnpm] workspace's project references with `tsc --build`, using
 the [TypeScript] version the lock file installs. `projects` lists what to build,
 for tsconfig files the root one doesn't reference.
 
+The image gets git and CA certificates first, from `apt-get` or `apk`, so
+`baseImageAddress` needs one of them.
+
 The install runs in layers: the lock file, pnpm's settings, patches and every
 workspace manifest install the dependencies and build them, and only then comes
 the rest of the source, where `pnpm rebuild --pending` runs the workspace's own

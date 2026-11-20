@@ -41,7 +41,7 @@ fails_with() {
   }
 }
 
-fixture suite 'baseImageAddress = "node:24"'
+fixture suite
 passes suite
 
 fixture failing-test
@@ -55,6 +55,3 @@ passes selected-project
 fixture filtered-files 'filters = ["packages/generated"]'
 add_failing_test filtered-files
 passes filtered-files
-
-fixture default-image-without-git
-fails_with default-image-without-git "spawnSync git ENOENT"
