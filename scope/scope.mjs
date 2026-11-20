@@ -1,39 +1,20 @@
+import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import picomatch from 'picomatch'
 
 const checkName =
   /^[a-zA-Z0-9_][a-zA-Z0-9._-]*(?:\/[a-zA-Z0-9_][a-zA-Z0-9._-]*)*$/
-const statuses = /^[ADMTUXB]$/
-
-function changedPaths(changes) {
-  const records = changes.split('\0')
-  if (records.pop() !== '' || records.length % 2 !== 0) {
-    throw new Error('Incomplete changed path list')
-  }
-
-  const paths = new Set()
-  for (let i = 0; i < records.length; i += 2) {
-    const [status, path] = [records[i], records[i + 1]]
-    if (!statuses.test(status) || !path) {
-      throw new Error('Invalid changed path record')
+function checkNames(links, main) {
+  return links.map((link) => {
+    const name = new URL(link).searchParams.get('check')
+    if (!name || !checkName.test(name)) {
+      throw new Error('Invalid Dagger check name')
     }
-    paths.add(path)
-  }
-  return [...paths]
-}
-
-function checkNames(list) {
-  return list
-    .trim()
-    .split('\n')
-    .filter(Boolean)
-    .map((link) => {
-      const name = new URL(link).searchParams.get('check')
-      if (!name || !checkName.test(name)) {
-        throw new Error('Invalid Dagger check name')
-      }
-      return name
-    })
+    // Loading the resolver with -m qualifies the workspace's main checks.
+    return main && name.startsWith(`${main}/`)
+      ? name.slice(main.length + 1)
+      : name
+  })
 }
 
 function expand(selector, names) {
@@ -90,14 +71,48 @@ function select(rules, paths, names, always) {
     : { reason: 'The changed paths selected no checks' }
 }
 
-const readInput = (name) => readFileSync(`/inputs/${name}`, 'utf8')
+const git = (...args) =>
+  execFileSync('git', ['--git-dir=/git', '--no-replace-objects', ...args], {
+    encoding: 'utf8',
+  })
+
+const readInput = (name) =>
+  JSON.parse(readFileSync(`/inputs/${name}.json`, 'utf8'))
+
 let result
 try {
+  const [mergeSha, headSha] = readInput('merge')
+  const [merge, base, head, extraParent] = git(
+    'rev-list',
+    '-1',
+    '--parents',
+    'HEAD',
+  )
+    .trim()
+    .split(' ')
+  if (merge !== mergeSha || !base || !head || head !== headSha || extraParent) {
+    throw new Error(
+      'The workspace does not match the expected pull request merge commit',
+    )
+  }
+
+  const rules = JSON.parse(git('show', `${base}:ci/scope.json`))
+  const paths = git(
+    'diff',
+    '--name-only',
+    '--no-renames',
+    '-z',
+    base,
+    merge,
+    '--',
+  )
+    .split('\0')
+    .filter(Boolean)
   result = select(
-    JSON.parse(readInput('rules.json')),
-    changedPaths(readInput('changes')),
-    checkNames(readInput('checks')),
-    JSON.parse(readInput('always.json')),
+    rules,
+    paths,
+    checkNames(readInput('checks'), readInput('main')),
+    readInput('always'),
   )
 } catch (error) {
   result = { reason: error.message }
