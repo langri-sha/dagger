@@ -3,39 +3,49 @@ Resolve the Dagger checks a change puts in scope using first-match path rules.
 """
 type Scope {
   """
-  Return JSON with the CLI arguments to pass to dagger check and a Markdown
-  summary. An empty argument list means run the full suite.
+  Select checks for a tested merge commit using its first parent's rules.
+  Return JSON with dagger check arguments and a Markdown summary. An empty
+  argument list means run the full suite.
   """
-  pub resolve(
+  pub resolveMerge(
+    ws: Workspace!,
     """
-    The ci/scope.json rules from the tested base commit.
+    The expected commit under test.
     """
-    rules: File!,
+    mergeSha: String!,
     """
-    NUL-delimited records from git diff --name-status --no-renames -z.
+    The expected head of the pull request.
     """
-    changes: File!,
-    """
-    The list printed by dagger check -l -f link in the tested workspace.
-    """
-    checks: File!,
+    headSha: String!,
     """
     Check names or modules to include on every scoped run.
     """
     always: [String!]! = [],
   ): String! {
+    let checks = ws.artifacts
+      .filterTypes(["Check"])
+      .pathDefinitions(typeAssertion: true)
+      .{{uri}}
+      .map { check => check.uri }
+
     container
-      .from("node:24-slim")
+      .from("node:24")
       .withWorkdir("/scope")
       .withFile("package.json", currentModule.source.file("package.json"))
       .withFile("package-lock.json", currentModule.source.file("package-lock.json"))
       .withExec(["npm", "ci", "--ignore-scripts", "--no-audit", "--no-fund"])
       .withFile("scope.mjs", currentModule.source.file("scope.mjs"))
-      .withFile("/inputs/rules.json", rules)
-      .withFile("/inputs/changes", changes)
-      .withFile("/inputs/checks", checks)
+      .withDirectory("/git", gitDir(ws))
+      .withNewFile("/inputs/merge.json", JSON.encode([mergeSha, headSha]))
+      .withNewFile("/inputs/checks.json", JSON.encode(checks))
+      .withNewFile("/inputs/main.json", JSON.encode(ws.main))
       .withNewFile("/inputs/always.json", JSON.encode(always))
       .withExec(["node", "scope.mjs"])
       .stdout
+  }
+
+  let gitDir(ws: Workspace!): Directory! {
+    # Workspace.git cannot reconstruct shallow history with missing grandparents.
+    ws.directory("/.git", include: ["HEAD", "objects/**", "packed-refs", "refs/**", "shallow"])
   }
 }
