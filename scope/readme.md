@@ -13,12 +13,17 @@ Set `HEAD_SHA` to the pull request's head SHA. The module verifies the checkout,
 compares the merge commit to its first parent, and reads `ci/scope.json` from
 that parent. It discovers available checks from the workspace under test.
 
-`ci/scope.json` is an ordered array. Each rule has a Picomatch `glob` and an
-`affects.checks` array of check selectors. A selector can name a module such as
-`terraform-web`, an individual check such as `ruff/projects/lint`, or a root
-check such as `lint`. `--always=lint` includes lint in every scoped run. Rules
-use the first match for each path, including dotfiles. The final rule must use
-`"glob": "**"` and `"checks": ["*"]`.
+`ci/scope.json` is an ordered array. Each rule has a `glob` string or a `globs`
+list. The first rule with any matching pattern wins, including for dotfiles.
+Patterns support literal paths, `*` within one path segment, and `**` as a whole
+segment. Use an explicit list for alternatives. A trailing `/**` also matches
+the path before the slash, so use `/**/*` for descendants only. Unsupported
+patterns run the full suite.
+
+`affects.checks` names modules such as `terraform-web`, individual checks such
+as `ruff/projects/lint`, or root checks such as `lint`. `--always=lint` includes
+lint in every scoped run. The final rule must use `"glob": "**"` or
+`"globs": ["**"]` and select `"checks": ["*"]`.
 
 The result is JSON with an `args` array and a Markdown `summary`. Invoke
 `dagger check` with those arguments. Run the full suite when the module errors
