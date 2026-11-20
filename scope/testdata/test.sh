@@ -10,7 +10,9 @@ cd "$scratch/repo"
 git config user.name Fixture
 git config user.email fixture@example.com
 
-mkdir -p ci terraform/web
+manifest='policies/dagger checks.json'
+mkdir -p policies scope terraform/web
+cp "$module"/{dagger-module.toml,main.dang} scope/
 cat >dagger.toml <<'TOML'
 [modules.fixture]
 source = "."
@@ -18,6 +20,12 @@ main = true
 
 [modules.terraform-placement]
 source = "placement"
+
+[modules.scope]
+source = "scope"
+
+[modules.scope.settings]
+manifest = "policies/dagger checks.json"
 TOML
 
 cat >dagger-module.toml <<'TOML'
@@ -43,7 +51,7 @@ type Placement {
 }
 DANG
 
-cat >ci/scope.json <<'JSON'
+cat >"$manifest" <<'JSON'
 [
   {"glob":"ci/**","affects":{"checks":["*"]}},
   {"globs":["terraform/web/.terraform.lock.hcl","**/*.md","docs/**/*"],"affects":{"checks":["validate"]}},
@@ -74,11 +82,17 @@ resolve() (
 )
 
 git clone -q --depth 2 "file://$scratch/repo" "$scratch/shallow"
-resolve "$scratch/shallow" --always=lint | jq -e '
+scoped='
   .args == ["--check", "lint", "--check", "terraform-placement/fmt",
             "--check", "terraform-placement/test", "--check", "validate"]
   and (.summary | contains("terraform/web/.terraform.lock.hcl"))
-' >/dev/null
+'
+resolve "$scratch/shallow" --always=lint | jq -e "$scoped" >/dev/null
+(
+  cd "$scratch/shallow"
+  dagger call scope resolve-merge --always=lint \
+    --merge-sha="$(git rev-parse HEAD)" --head-sha="$(git rev-parse HEAD^2)"
+) | jq -e "$scoped" >/dev/null
 
 resolve "$scratch/shallow" --always=missing | jq -e '
   .args == [] and (.summary | contains("matches missing"))
@@ -89,7 +103,7 @@ resolve "$scratch/shallow" --head-sha="$(git rev-parse HEAD^1)" | jq -e '
 ' >/dev/null
 
 git switch -qc change-rules
-printf 'invalid json\n' >ci/scope.json
+printf 'invalid json\n' >"$manifest"
 git commit -qam "Change scope rules"
 git switch -q main
 git merge -q --no-ff --no-edit change-rules
@@ -98,10 +112,38 @@ resolve "$scratch/repo" | jq -e '
   .args == [] and (.summary | contains("manifest changed"))
 ' >/dev/null
 
+git switch -q --detach pr
+base=$(git rev-parse HEAD)
+git mv "$manifest" policies/new.json
+sed -i 's|^manifest = .*|manifest = "policies/new.json"|' dagger.toml
+git commit -qam "Move scope rules"
+head=$(git rev-parse HEAD)
+git switch -q --detach "$base"
+git merge -q --no-ff --no-edit "$head"
+
+resolve "$scratch/repo" | jq -e '
+  .args == [] and (.summary | contains("dagger.toml changed"))
+' >/dev/null
+
+for setting in '' 'manifest = "../outside.json"'; do
+  git switch -q --detach pr
+  sed -i "s|^manifest = .*|$setting|" dagger.toml
+  git commit -qam "Use invalid scope configuration"
+  base=$(git rev-parse HEAD)
+
+  printf 'notes\n' >README.md
+  git commit -qam "Change Markdown"
+  head=$(git rev-parse HEAD)
+  git switch -q --detach "$base"
+  git merge -q --no-ff --no-edit "$head"
+
+  resolve "$scratch/repo" | jq -e '.args == []' >/dev/null
+done
+
 for unsupported in '{docs/**,notes/**}' 'docs/**/**'; do
   git switch -q --detach pr
-  jq --arg pattern "$unsupported" '.[1].globs[-1] = $pattern' ci/scope.json >"$scratch/rules.json"
-  cp "$scratch/rules.json" ci/scope.json
+  jq --arg pattern "$unsupported" '.[1].globs[-1] = $pattern' "$manifest" >"$scratch/rules.json"
+  cp "$scratch/rules.json" "$manifest"
   git commit -qam "Use an unsupported pattern"
   base=$(git rev-parse HEAD)
 
