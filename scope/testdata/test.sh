@@ -46,7 +46,7 @@ DANG
 cat >ci/scope.json <<'JSON'
 [
   {"glob":"ci/**","affects":{"checks":["*"]}},
-  {"glob":"terraform/web/.terraform.lock.hcl","affects":{"checks":["validate"]}},
+  {"globs":["terraform/web/.terraform.lock.hcl","**/*.md","docs/**/*"],"affects":{"checks":["validate"]}},
   {"glob":"terraform/**","affects":{"checks":["terraform-placement"]}},
   {"glob":"**","affects":{"checks":["*"]}}
 ]
@@ -57,6 +57,8 @@ git add .
 git commit -qm Base
 git switch -qc pr
 git mv terraform/web/.terraform.lock.hcl 'terraform/new input.tf'
+printf 'readme\n' >README.md
+git add README.md
 git commit -qm Rename
 git commit --allow-empty -qm "Advance PR head"
 git switch -q main
@@ -94,4 +96,17 @@ git merge -q --no-ff --no-edit change-rules
 
 resolve "$scratch/repo" | jq -e '
   .args == [] and (.summary | contains("manifest changed"))
+' >/dev/null
+
+git switch -q -c older-manifest pr
+sed -i 's/"docs\/\*\*\/\*"/"{docs\/\*\*,notes\/\*\*}"/' ci/scope.json
+git commit -qam "Use a brace alternative"
+git switch -qc docs-change
+printf 'notes\n' >README.md
+git commit -qam "Change Markdown"
+git switch -q older-manifest
+git merge -q --no-ff --no-edit docs-change
+
+resolve "$scratch/repo" | jq -e '
+  .args == [] and (.summary | contains("Unsupported scope glob"))
 ' >/dev/null
