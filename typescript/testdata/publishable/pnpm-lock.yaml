@@ -178,8 +178,8 @@ importers:
   packages/library:
     devDependencies:
       jsii:
-        specifier: 6.0.23
-        version: 6.0.23(supports-color@7.2.0)
+        specifier: 6.0.24
+        version: 6.0.24(supports-color@7.2.0)
 
   packages/scripted: {}
 
@@ -189,8 +189,8 @@ packages:
     resolution: {integrity: sha512-viMnVpg4vfa22vYawtQqjkuOsLa5eYRpKfs1aTxBE7/WsXLCfvqCX0XNgi27NmIHUtUzXUpzzS+gmY1731h1tQ==}
     engines: {node: '>= 14.17.0'}
 
-  '@jsii/spec@1.142.0':
-    resolution: {integrity: sha512-6AX6EpAMn7YNWwKr0c19LShxFnSXokhMaOZedkHxAEkoY12Rs1XkZLFgHoag7HdFQ3k8EPsQ4b2iyX24LEXtZg==}
+  '@jsii/spec@1.143.0':
+    resolution: {integrity: sha512-37FQ1/6yzFBYVMSFkeDajUNjf/9OVgyi1zRh6aMGFjKfgiagVDoI83Pn2h5i3WgJzDXx556+BFevYtfYoS1dqg==}
     engines: {node: '>= 14.17.0'}
 
   ansi-regex@5.0.1:
@@ -273,8 +273,8 @@ packages:
     resolution: {integrity: sha512-zymm5+u+sCsSWyD9qNaejV3DFvhCKclKdizYaJUuHA83RLjb7nSuGnddCHGv0hk+KY7BMAlsWeK4Ueg6EV6XQg==}
     engines: {node: '>=8'}
 
-  jsii@6.0.23:
-    resolution: {integrity: sha512-3ZOUdIR1SyDDmXyiLURf97L6JP9lh5dlHXVMx8BEhERXlLl49rKxwM9XV3XuHuaF1+o7qXyTAfucpmtwdxFovg==}
+  jsii@6.0.24:
+    resolution: {integrity: sha512-9V6br5rQDpDNUtIBaNG0mv1gxulkRQMbYbJj0tAHWnnf0Ebr7noYpeD9s63fHzPjwlaYo8QSZLPjFs+H68Mn3w==}
     engines: {node: '>= 20.16.0'}
     hasBin: true
 
@@ -366,7 +366,7 @@ snapshots:
       chalk: 4.1.2
       semver: 7.8.6
 
-  '@jsii/spec@1.142.0': {}
+  '@jsii/spec@1.143.0': {}
 
   ansi-regex@5.0.1: {}
 
@@ -427,10 +427,10 @@ snapshots:
 
   is-fullwidth-code-point@3.0.0: {}
 
-  jsii@6.0.23(supports-color@7.2.0):
+  jsii@6.0.24(supports-color@7.2.0):
     dependencies:
       '@jsii/check-node': 1.142.0
-      '@jsii/spec': 1.142.0
+      '@jsii/spec': 1.143.0
       case: 1.6.3
       chalk: 4.1.2
       fast-deep-equal: 3.1.3
