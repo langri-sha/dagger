@@ -43,14 +43,19 @@ type Scope {
     if (paths.isEmpty) {
       raise "The changed path list is empty"
     }
-    if (paths.contains("ci/scope.json")) {
-      raise "The scope manifest changed"
+    if (paths.contains("dagger.toml")) {
+      raise "dagger.toml changed"
     }
     if (paths.any { path => path.containsMatch(`[[:cntrl:]]`) }) {
       raise "A changed path contains a control character"
     }
 
-    let rules = JSON.decode(git.withExec(["git", "show", base + ":ci/scope.json"]).stdout) :: [ScopeRule!]!
+    let manifest = manifestPath(git, base)
+    if (paths.contains(manifest)) {
+      raise "The scope manifest changed"
+    }
+
+    let rules = JSON.decode(git.withExec(["git", "show", base + ":" + manifest]).stdout) :: [ScopeRule!]!
 
     if (rules.isEmpty or
         patterns(rules[rules.length - 1]!) != ["**"] or
@@ -93,11 +98,25 @@ type Scope {
     )
   }
 
+  let manifestPath(git: Container!, base: String!): String! {
+    let config = TOML.decode(git.withExec(["git", "show", base + ":dagger.toml"]).stdout) ::
+      {{ modules: {{ scope: {{ settings: {{ manifest: String! }}! }}! }}! }}!
+    let path = config.modules.scope.settings.manifest
+
+    if (path.trimSpace.isEmpty or path.contains("\\") or path.containsMatch(`[[:cntrl:]]|^[a-zA-Z]:`) or
+        path.split("/").any { segment => segment == "" or segment == "." or segment == ".." }) {
+      raise "Expected a repository-relative scope manifest path"
+    }
+
+    path
+  }
+
   let checkName: Regexp! = `^[a-zA-Z0-9_][a-zA-Z0-9._-]*(/[a-zA-Z0-9_][a-zA-Z0-9._-]*)*$`
 
   let checkNames(ws: Workspace!): [String!]! {
     let main = ws.main
-    ws.artifacts.filterTypes(["Check"]).pathDefinitions(typeAssertion: true).{{uri}}.map { check =>
+    # The resolver's pinned source can differ from the workspace installation.
+    ws.withoutModule("scope").artifacts.filterTypes(["Check"]).pathDefinitions(typeAssertion: true).{{uri}}.map { check =>
       let match = check.uri.match(`^dag\+check://\?check=([^&]+)$`)
 
       if (match == null or !match!.captures[0]!.containsMatch(checkName)) {
