@@ -41,6 +41,7 @@ type Zig {
   new(
     ws: Workspace!,
     version: String! = "",
+    # renovate: datasource=docker
     baseImageAddress: String! = "alpine:3",
     steps: [String!]! = [],
     args: [String!]! = [],
@@ -113,6 +114,7 @@ type Zig {
   """
   let toolchain: Directory! {
     container
+      # renovate: datasource=docker
       .from("alpine:3")
       .withExec(["apk", "add", "--no-cache", "curl", "minisign"])
       .withEnvVariable("ZIG_VERSION", version)

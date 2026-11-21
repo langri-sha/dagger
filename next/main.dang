@@ -47,6 +47,7 @@ type Next {
   new(
     ws: Workspace!,
     app: String! = ".",
+    # renovate: datasource=docker
     baseImageAddress: String! = "node:24-slim",
     outDir: String! = ".next",
     environment: [String!]! = [],
@@ -80,6 +81,7 @@ type Next {
     """
     The image to run the server on.
     """
+    # renovate: datasource=docker
     runtimeImageAddress: String! = "node:24-slim",
     port: Int! = 3000,
   ): Container! {
