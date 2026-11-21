@@ -28,6 +28,7 @@
     "prettier.config.js",
     "projen/dagger-module.toml",
     "renovate.json5",
+    "scope/dagger-module.toml",
     "supabase/dagger-module.toml",
     "terraform/dagger-module.toml",
     "typescript/dagger-module.toml",

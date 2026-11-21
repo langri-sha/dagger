@@ -1,0 +1,196 @@
+"""
+Resolve the Dagger checks a change puts in scope using first-match path rules.
+"""
+type Scope {
+  """
+  Select checks for a tested merge commit using its first parent's rules.
+  Return JSON with dagger check arguments and a Markdown summary. An empty
+  argument list means run the full suite.
+  """
+  pub resolveMerge(
+    ws: Workspace!,
+    """
+    The expected commit under test.
+    """
+    mergeSha: String!,
+    """
+    The expected head of the pull request.
+    """
+    headSha: String!,
+    """
+    Check names or modules to include on every scoped run.
+    """
+    always: [String!]! = [],
+  ): String! {
+    select(ws, mergeSha, headSha, always) rescue {
+      err: Error! => result([], "All Dagger checks run. " + label(err.message.truncate(200)))
+    }
+  }
+
+  let select(ws: Workspace!, mergeSha: String!, headSha: String!, always: [String!]!): String! {
+    let git = gitCheckout(ws)
+    let commits = git.withExec(["git", "rev-list", "-1", "--parents", "HEAD"]).stdout.trimSpace.split(" ")
+
+    if (commits.length != 3 or commits[0] != mergeSha or commits[2] != headSha) {
+      raise "The workspace does not match the expected pull request merge commit"
+    }
+
+    let base = commits[1]!
+    let paths = git
+      .withExec(["git", "diff", "--name-only", "--no-renames", "-z", base, mergeSha, "--"])
+      .stdout.splitMatches(`\x00`).reject { path => path == "" }
+
+    if (paths.isEmpty) {
+      raise "The changed path list is empty"
+    }
+    if (paths.contains("dagger.toml")) {
+      raise "dagger.toml changed"
+    }
+    if (paths.any { path => path.containsMatch(`[[:cntrl:]]`) }) {
+      raise "A changed path contains a control character"
+    }
+
+    let config = TOML.decode(git.withExec(["git", "show", base + ":dagger.toml"]).stdout) ::
+      {{ modules: {{ scope: {{ settings: {{ rules: [ScopeRule!]! }}! }}! }}! }}!
+    let rules = config.modules.scope.settings.rules
+
+    if (rules.isEmpty or
+        patterns(rules[rules.length - 1]!) != ["**"] or
+        !rules[rules.length - 1]!.affects.checks.contains("*")) {
+      raise "Expected a rule list ending in a ** catch-all that selects every check"
+    }
+
+    let names = checkNames(ws)
+    let matchers = rules.map { rule =>
+      let globs = patterns(rule)
+      let checks = rule.affects.checks.flatMap { check =>
+        if (check == "*") { ["*"] } else { expand(check, names) }
+      }
+      {{ globs: globs, expressions: globs.map { glob => compile(glob) }, checks: checks }}
+    }
+
+    let matched = paths.map { path =>
+      let rule = matchers.find { rule =>
+        rule.expressions.any { expression => path.containsMatch(expression) }
+      }
+
+      if (rule == null or rule!.checks.contains("*")) {
+        raise "A changed path requires the full check suite"
+      }
+
+      rule!
+    }
+
+    let selected = (always.flatMap { check => expand(check, names) } + matched.flatMap { rule => rule.checks }).uniq.sort
+
+    if (selected.isEmpty) {
+      raise "The changed paths selected no checks"
+    }
+
+    let globs = matched.flatMap { rule => rule.globs }.uniq
+    result(
+      selected.flatMap { name => ["--check", name] },
+      "Checks: " + selected.map { name => label(name) }.join(", ") +
+        "\n\nMatched rules: " + globs.map { glob => label(glob) }.join(", "),
+    )
+  }
+
+  let checkName: Regexp! = `^[a-zA-Z0-9_][a-zA-Z0-9._-]*(/[a-zA-Z0-9_][a-zA-Z0-9._-]*)*$`
+
+  let checkNames(ws: Workspace!): [String!]! {
+    let main = ws.main
+    # The resolver's pinned source can differ from the workspace installation.
+    ws.withoutModule("scope").artifacts.filterTypes(["Check"]).pathDefinitions(typeAssertion: true).{{uri}}.map { check =>
+      let match = check.uri.match(`^dag\+check://\?check=([^&]+)$`)
+
+      if (match == null or !match!.captures[0]!.containsMatch(checkName)) {
+        raise "Invalid Dagger check name"
+      }
+
+      let name = match!.captures[0]!
+
+      # Loading the resolver with -m qualifies the workspace's main checks.
+      if (main == "") { name } else { name.trimPrefix(main + "/") }
+    }
+  }
+
+  let expand(selector: String!, names: [String!]!): [String!]! {
+    if (!selector.containsMatch(checkName)) {
+      raise "Invalid Dagger check selector"
+    }
+
+    let matches = names.filter { name =>
+      name == selector or (!selector.contains("/") and name.hasPrefix(selector + "/"))
+    }
+
+    if (matches.isEmpty) {
+      raise "No Dagger check matches " + selector
+    }
+
+    matches
+  }
+
+  let patterns(rule: ScopeRule!): [String!]! {
+    if (rule.glob != null and rule.globs == null) {
+      [rule.glob!]
+    } else if (rule.glob == null and rule.globs != null and !rule.globs!.isEmpty) {
+      rule.globs!
+    } else {
+      raise "Each scope rule needs a glob or a nonempty globs list"
+    }
+  }
+
+  let compile(glob: String!): Regexp! {
+    if (glob == "**") {
+      Regexp(`^.+$`)
+    } else {
+      if (glob.containsMatch(`[?!{}\[\]\\()[:cntrl:]]`) or
+          glob.containsMatch(`(^|/)\*\*/\*\*(/|$)`) or
+          glob.split("/").any { segment => segment == "" or (segment != "**" and segment.contains("**")) }) {
+        raise "Unsupported scope glob " + glob
+      }
+
+      let expression = glob.rewriteMatches(`/\*\*$|\*\*/|\*|[^*]`) { token =>
+        if (token.string == "**/") {
+          "(?:[^/]+/)*"
+        } else if (token.string == "/**") {
+          "(?:/.*)?"
+        } else if (token.string == "*") {
+          "[^/]*"
+        } else {
+          Regexp.escape(token.string)
+        }
+      }
+
+      Regexp("^" + expression + "$")
+    }
+  }
+
+  let label(value: String!): String! {
+    "`" + value.replaceMatches(`[\x60<>[:cntrl:]]`, with: "?") + "`"
+  }
+
+  let result(args: [String!]!, summary: String!): String! {
+    JSON.encode({{ args: args, summary: "### Dagger check scope\n\n" + summary + "\n" }})
+  }
+
+  let gitCheckout(ws: Workspace!): Container! {
+    # Workspace.git cannot reconstruct shallow history with missing grandparents.
+    let git = ws.directory("/.git", include: ["HEAD", "objects/**", "packed-refs", "refs/**", "shallow"])
+    # renovate: datasource=docker
+    container.from("alpine/git:v2.52.0")
+      .withDirectory("/git", git)
+      .withEnvVariable("GIT_DIR", "/git")
+      .withEnvVariable("GIT_NO_REPLACE_OBJECTS", "1")
+  }
+}
+
+type ScopeRule {
+  pub glob: String
+  pub globs: [String!]
+  pub affects: ScopeAffects!
+}
+
+type ScopeAffects {
+  pub checks: [String!]!
+}

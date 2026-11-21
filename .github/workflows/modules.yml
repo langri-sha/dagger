@@ -23,3 +23,5 @@ jobs:
           for manifest in */dagger-module.toml; do
             dagger functions -m "./${manifest%/*}" > /dev/null
           done
+      - name: Test scope resolution
+        run: scope/testdata/test.sh

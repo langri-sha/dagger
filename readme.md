@@ -23,6 +23,7 @@ Each module is a [Dang] module for Dagger 1.0, released together under one
 | [next]       | Build Next.js apps and standalone runtime images              |
 | [nginx]      | Build nginx images and check configuration and responses      |
 | [projen]     | Synthesize projen projects and refresh lock files             |
+| [scope]      | Select Dagger checks by changed paths                         |
 | [supabase]   | Push migrations and deploy Edge Functions                     |
 | [terraform]  | Check Terraform roots and update provider lock files          |
 | [typescript] | Type-check pnpm workspaces and validate release builds        |
@@ -78,6 +79,7 @@ MIT — see [license].
 [next]: ./next/readme.md
 [nginx]: ./nginx/readme.md
 [projen]: ./projen/readme.md
+[scope]: ./scope/readme.md
 [supabase]: ./supabase/readme.md
 [terraform]: ./terraform/readme.md
 [typescript]: ./typescript/readme.md
