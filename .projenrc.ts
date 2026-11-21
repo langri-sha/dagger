@@ -78,8 +78,18 @@ const project = new Project({
         managerFilePatterns: ['/\\.dang$/'],
         matchStrings: [
           '# renovate: datasource=(?<datasource>[\\w.-]+) depName=(?<depName>\\S+)\\s+let \\w+: String! = "(?<currentValue>[^"]+)"',
-          '# renovate: datasource=(?<datasource>docker)[ \\t]*\\r?\\n[ \\t]*(?:(?:let )?\\w+:[ \\t]*String![ \\t]*=[ \\t]*|[\\w.]*\\.from\\([ \\t]*)"(?<depName>[\\w./-]+(?::\\d+/[\\w./-]+)?):(?<currentValue>[\\w][\\w.-]*)"',
         ],
+      },
+      {
+        customType: 'regex',
+        datasourceTemplate: 'docker',
+        managerFilePatterns: ['/\\.dang$/'],
+        matchStringsStrategy: 'recursive',
+        matchStrings: [
+          '# renovate: datasource=docker[ \\t]*\\r?\\n[ \\t]*(?:\\w+:[ \\t]*String![ \\t]*=[ \\t]*|[\\w.]*\\.from\\([ \\t]*)"[^"\\r\\n]+"[ \\t\\r\\n]*[,)]',
+          '"(?<depName>[\\w./-]+(?::\\d+/[\\w./-]+)?):(?<currentValue>\\w[\\w.-]*)"',
+        ],
+        autoReplaceStringTemplate: '"{{{depName}}}:{{{newValue}}}"',
       },
     ],
   },
