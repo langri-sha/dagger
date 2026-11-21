@@ -15,6 +15,7 @@ type Cargo {
 
   new(
     ws: Workspace!,
+    # renovate: datasource=docker
     baseImageAddress: String! = "rust:1-slim",
   ) {
     self.source = ws.directory("/", exclude: built)

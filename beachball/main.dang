@@ -26,6 +26,7 @@ type Beachball {
 
   new(
     ws: Workspace!,
+    # renovate: datasource=docker
     baseImageAddress: String! = "node:24",
     authorEmail: String = null,
   ) {
