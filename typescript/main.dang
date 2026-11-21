@@ -28,6 +28,7 @@ type Typescript {
 
   new(
     ws: Workspace!,
+    # renovate: datasource=docker
     baseImageAddress: String! = "node:24-slim",
     projects: [String!]! = ["."],
     prepublish: Boolean! = false,
