@@ -50,12 +50,9 @@ type Scope {
       raise "A changed path contains a control character"
     }
 
-    let manifest = manifestPath(git, base)
-    if (paths.contains(manifest)) {
-      raise "The scope manifest changed"
-    }
-
-    let rules = JSON.decode(git.withExec(["git", "show", base + ":" + manifest]).stdout) :: [ScopeRule!]!
+    let config = TOML.decode(git.withExec(["git", "show", base + ":dagger.toml"]).stdout) ::
+      {{ modules: {{ scope: {{ settings: {{ rules: [ScopeRule!]! }}! }}! }}! }}!
+    let rules = config.modules.scope.settings.rules
 
     if (rules.isEmpty or
         patterns(rules[rules.length - 1]!) != ["**"] or
@@ -96,19 +93,6 @@ type Scope {
       "Checks: " + selected.map { name => label(name) }.join(", ") +
         "\n\nMatched rules: " + globs.map { glob => label(glob) }.join(", "),
     )
-  }
-
-  let manifestPath(git: Container!, base: String!): String! {
-    let config = TOML.decode(git.withExec(["git", "show", base + ":dagger.toml"]).stdout) ::
-      {{ modules: {{ scope: {{ settings: {{ manifest: String! }}! }}! }}! }}!
-    let path = config.modules.scope.settings.manifest
-
-    if (path.trimSpace.isEmpty or path.contains("\\") or path.containsMatch(`[[:cntrl:]]|^[a-zA-Z]:`) or
-        path.split("/").any { segment => segment == "" or segment == "." or segment == ".." }) {
-      raise "Expected a repository-relative scope manifest path"
-    }
-
-    path
   }
 
   let checkName: Regexp! = `^[a-zA-Z0-9_][a-zA-Z0-9._-]*(/[a-zA-Z0-9_][a-zA-Z0-9._-]*)*$`
