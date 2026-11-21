@@ -10,8 +10,7 @@ cd "$scratch/repo"
 git config user.name Fixture
 git config user.email fixture@example.com
 
-manifest='policies/dagger checks.json'
-mkdir -p policies scope terraform/web
+mkdir -p scope terraform/web
 cp "$module"/{dagger-module.toml,main.dang} scope/
 cat >dagger.toml <<'TOML'
 [modules.fixture]
@@ -24,8 +23,24 @@ source = "placement"
 [modules.scope]
 source = "scope"
 
-[modules.scope.settings]
-manifest = "policies/dagger checks.json"
+[[modules.scope.settings.rules]]
+globs = ["terraform/web/.terraform.lock.hcl", "docs/**/*"]
+affects = { apps = ["web"], checks = ["validate"] }
+reason = "Validate lock files and documentation."
+source = "dagger.toml"
+
+[[modules.scope.settings.rules]]
+glob = "**/*.md"
+affects = { checks = [] }
+
+[[modules.scope.settings.rules]]
+glob = "terraform/**"
+affects.checks = ["terraform-placement"]
+
+[[modules.scope.settings.rules]]
+glob = "**"
+[modules.scope.settings.rules.affects]
+checks = ["*"]
 TOML
 
 cat >dagger-module.toml <<'TOML'
@@ -50,15 +65,6 @@ type Placement {
   pub test: Void @check {}
 }
 DANG
-
-cat >"$manifest" <<'JSON'
-[
-  {"glob":"ci/**","affects":{"checks":["*"]}},
-  {"globs":["terraform/web/.terraform.lock.hcl","**/*.md","docs/**/*"],"affects":{"checks":["validate"]}},
-  {"glob":"terraform/**","affects":{"checks":["terraform-placement"]}},
-  {"glob":"**","affects":{"checks":["*"]}}
-]
-JSON
 
 printf 'base\n' >terraform/web/.terraform.lock.hcl
 git add .
@@ -103,32 +109,18 @@ resolve "$scratch/shallow" --head-sha="$(git rev-parse HEAD^1)" | jq -e '
 ' >/dev/null
 
 git switch -qc change-rules
-printf 'invalid json\n' >"$manifest"
+sed -i 's/checks = \["validate"\]/checks = ["lint"]/' dagger.toml
 git commit -qam "Change scope rules"
 git switch -q main
 git merge -q --no-ff --no-edit change-rules
 
 resolve "$scratch/repo" | jq -e '
-  .args == [] and (.summary | contains("manifest changed"))
-' >/dev/null
-
-git switch -q --detach pr
-base=$(git rev-parse HEAD)
-git mv "$manifest" policies/new.json
-sed -i 's|^manifest = .*|manifest = "policies/new.json"|' dagger.toml
-git commit -qam "Move scope rules"
-head=$(git rev-parse HEAD)
-git switch -q --detach "$base"
-git merge -q --no-ff --no-edit "$head"
-
-resolve "$scratch/repo" | jq -e '
   .args == [] and (.summary | contains("dagger.toml changed"))
 ' >/dev/null
 
-for setting in '' 'manifest = "../outside.json"'; do
-  git switch -q --detach pr
-  sed -i "s|^manifest = .*|$setting|" dagger.toml
-  git commit -qam "Use invalid scope configuration"
+mergeMarkdownChange() {
+  local base head
+  git commit -qam "$1"
   base=$(git rev-parse HEAD)
 
   printf 'notes\n' >README.md
@@ -136,22 +128,28 @@ for setting in '' 'manifest = "../outside.json"'; do
   head=$(git rev-parse HEAD)
   git switch -q --detach "$base"
   git merge -q --no-ff --no-edit "$head"
+}
 
-  resolve "$scratch/repo" | jq -e '.args == []' >/dev/null
-done
+git switch -q --detach pr
+sed -i '/^\[\[modules.scope.settings.rules\]\]/,$d' dagger.toml
+mergeMarkdownChange "Remove scope rules"
+
+resolve "$scratch/repo" | jq -e '
+  .args == [] and (.summary | contains("missing required field"))
+' >/dev/null
+
+git switch -q --detach pr
+sed -i 's/checks = \["validate"\]/checks = "validate"/' dagger.toml
+mergeMarkdownChange "Use an invalid check list"
+
+resolve "$scratch/repo" | jq -e '
+  .args == [] and (.summary | contains("affects.checks"))
+' >/dev/null
 
 for unsupported in '{docs/**,notes/**}' 'docs/**/**'; do
   git switch -q --detach pr
-  jq --arg pattern "$unsupported" '.[1].globs[-1] = $pattern' "$manifest" >"$scratch/rules.json"
-  cp "$scratch/rules.json" "$manifest"
-  git commit -qam "Use an unsupported pattern"
-  base=$(git rev-parse HEAD)
-
-  printf 'notes\n' >README.md
-  git commit -qam "Change Markdown"
-  head=$(git rev-parse HEAD)
-  git switch -q --detach "$base"
-  git merge -q --no-ff --no-edit "$head"
+  sed -i "s@docs/[*][*]/[*]@$unsupported@" dagger.toml
+  mergeMarkdownChange "Use an unsupported pattern"
 
   resolve "$scratch/repo" | jq -e '
     .args == [] and (.summary | contains("Unsupported scope glob"))
