@@ -7,7 +7,10 @@ for tsconfig files the root one doesn't reference.
 The install runs in layers: the lock file, pnpm's settings, patches and every
 workspace manifest install the dependencies and build them, and only then comes
 the rest of the source, where `pnpm rebuild --pending` runs the workspace's own
-lifecycle scripts. An edit to any other file reuses the dependency layers.
+lifecycle scripts. An edit to any other file reuses the dependency layers. The
+source leaves out `.git` and `.merge-base`, whose contents differ between
+checkouts of the same tree and would re-key every layer after it, so git
+commands in `/src` no longer see a repository.
 
 The `publishable` check runs every package's `prepublishOnly` script, the
 workspace root's too, as publishing would, so a build that only fails at release
