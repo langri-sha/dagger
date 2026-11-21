@@ -20,6 +20,7 @@ type Changesets {
 
   new(
     ws: Workspace!,
+    # renovate: datasource=docker
     baseImageAddress: String! = "node:24",
   ) {
     self.source = ws.directory("/", exclude: installed + [handOver])
