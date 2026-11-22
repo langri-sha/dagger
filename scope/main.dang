@@ -178,7 +178,7 @@ type Scope {
     # Workspace.git cannot reconstruct shallow history with missing grandparents.
     let git = ws.directory("/.git", include: ["HEAD", "objects/**", "packed-refs", "refs/**", "shallow"])
     # renovate: datasource=docker
-    container.from("alpine/git:v2.52.0")
+    container.from("alpine/git:v2.54.0")
       .withDirectory("/git", git)
       .withEnvVariable("GIT_DIR", "/git")
       .withEnvVariable("GIT_NO_REPLACE_OBJECTS", "1")
