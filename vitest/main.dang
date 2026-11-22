@@ -24,7 +24,7 @@ type Vitest {
   new(
     ws: Workspace!,
     # renovate: datasource=docker
-    baseImageAddress: String! = "node:24-slim",
+    baseImageAddress: String! = "node:26-slim",
     projects: [String!]! = [],
     filters: [String!]! = [],
   ) {

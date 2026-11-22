@@ -11,7 +11,7 @@ type Projen {
   new(
     ws: Workspace!,
     # renovate: datasource=docker
-    baseImageAddress: String! = "node:24-slim",
+    baseImageAddress: String! = "node:26-slim",
   ) {
     self.installed = typescript(ws: ws, baseImageAddress: baseImageAddress).base
     self

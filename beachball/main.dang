@@ -27,7 +27,7 @@ type Beachball {
   new(
     ws: Workspace!,
     # renovate: datasource=docker
-    baseImageAddress: String! = "node:24",
+    baseImageAddress: String! = "node:26",
     authorEmail: String = null,
   ) {
     self.source = ws.directory("/", exclude: installed + [handOver])

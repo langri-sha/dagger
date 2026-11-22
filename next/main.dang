@@ -48,7 +48,7 @@ type Next {
     ws: Workspace!,
     app: String! = ".",
     # renovate: datasource=docker
-    baseImageAddress: String! = "node:24-slim",
+    baseImageAddress: String! = "node:26-slim",
     outDir: String! = ".next",
     environment: [String!]! = [],
     cacheKey: String! = "",
@@ -82,7 +82,7 @@ type Next {
     The image to run the server on.
     """
     # renovate: datasource=docker
-    runtimeImageAddress: String! = "node:24-slim",
+    runtimeImageAddress: String! = "node:26-slim",
     port: Int! = 3000,
   ): Container! {
     if (!built.directory(outDir).entries.contains("standalone/")) {
