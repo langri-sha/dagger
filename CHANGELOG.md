@@ -1,5 +1,16 @@
 # dagger
 
+## 2.4.0
+
+### Minor Changes
+
+- 252b52c: Add a scope module that selects Dagger checks from changed paths and checked-in
+  rules.
+
+### Patch Changes
+
+- e54ab90: Preserve Git index delimiters when loading Beachball and Changesets on Dagger beta.28.
+
 ## 2.3.0
 
 ### Minor Changes
