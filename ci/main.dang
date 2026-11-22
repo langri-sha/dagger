@@ -16,7 +16,7 @@ type Ci {
   new(
     ws: Workspace!,
     # renovate: datasource=docker
-    baseImageAddress: String! = "node:24",
+    baseImageAddress: String! = "node:26",
   ) {
     self.source = ws.directory("/", exclude: installed)
     self.baseImageAddress = baseImageAddress
