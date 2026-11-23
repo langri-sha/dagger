@@ -178,15 +178,15 @@ importers:
   packages/library:
     devDependencies:
       jsii:
-        specifier: 6.0.24
-        version: 6.0.24(supports-color@7.2.0)
+        specifier: 6.0.25
+        version: 6.0.25(supports-color@7.2.0)
 
   packages/scripted: {}
 
 packages:
 
-  '@jsii/check-node@1.142.0':
-    resolution: {integrity: sha512-viMnVpg4vfa22vYawtQqjkuOsLa5eYRpKfs1aTxBE7/WsXLCfvqCX0XNgi27NmIHUtUzXUpzzS+gmY1731h1tQ==}
+  '@jsii/check-node@1.143.0':
+    resolution: {integrity: sha512-4BawLEyDtjSteM7PRamldWBpLv6yJ1hW6JTBSFMN1Z2fcE2UbN19r+UQ6IvpIRlYapiI1ILYUGhIK39YvqE04Q==}
     engines: {node: '>= 14.17.0'}
 
   '@jsii/spec@1.143.0':
@@ -273,8 +273,8 @@ packages:
     resolution: {integrity: sha512-zymm5+u+sCsSWyD9qNaejV3DFvhCKclKdizYaJUuHA83RLjb7nSuGnddCHGv0hk+KY7BMAlsWeK4Ueg6EV6XQg==}
     engines: {node: '>=8'}
 
-  jsii@6.0.24:
-    resolution: {integrity: sha512-9V6br5rQDpDNUtIBaNG0mv1gxulkRQMbYbJj0tAHWnnf0Ebr7noYpeD9s63fHzPjwlaYo8QSZLPjFs+H68Mn3w==}
+  jsii@6.0.25:
+    resolution: {integrity: sha512-wkpb5ZIWpw4GhmEqEsDSQfkGBkTcJSF0Uy4zP8oNInww1UfPlSlNCdGQfA1pPtlBW1FHbUyAhyzh41r5R0NYJw==}
     engines: {node: '>= 20.16.0'}
     hasBin: true
 
@@ -361,7 +361,7 @@ packages:
 
 snapshots:
 
-  '@jsii/check-node@1.142.0':
+  '@jsii/check-node@1.143.0':
     dependencies:
       chalk: 4.1.2
       semver: 7.8.6
@@ -427,9 +427,9 @@ snapshots:
 
   is-fullwidth-code-point@3.0.0: {}
 
-  jsii@6.0.24(supports-color@7.2.0):
+  jsii@6.0.25(supports-color@7.2.0):
     dependencies:
-      '@jsii/check-node': 1.142.0
+      '@jsii/check-node': 1.143.0
       '@jsii/spec': 1.143.0
       case: 1.6.3
       chalk: 4.1.2
