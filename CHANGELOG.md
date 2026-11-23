@@ -1,5 +1,11 @@
 # dagger
 
+## 2.4.1
+
+### Patch Changes
+
+- 092c486: Restore variable substitution in nginx test specs under Dang 2.5.
+
 ## 2.4.0
 
 ### Minor Changes
