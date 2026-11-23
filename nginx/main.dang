@@ -42,7 +42,7 @@ type Nginx {
     )
     self.spec = variables.reduce(spec.contents) { text, variable =>
       let pair = split(variable, "variables")
-      text.replace("${" + pair[0]! + "}", pair[1]!)
+      text.replace("$" + "{" + pair[0]! + "}", pair[1]!)
     }
     self
   }
