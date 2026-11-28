@@ -21,6 +21,7 @@
     "changesets/dagger-module.toml",
     "ci/dagger-module.toml",
     "CODEOWNERS",
+    "dagger.toml",
     "license",
     "next/dagger-module.toml",
     "nginx/dagger-module.toml",

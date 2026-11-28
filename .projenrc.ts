@@ -52,6 +52,14 @@ const project = new Project({
       },
       zig: {},
     },
+    workspace: {
+      modules: {
+        ci: { source: 'ci' },
+        projen: { source: 'projen' },
+        changesets: { source: 'changesets' },
+        actionlint: { source: 'actionlint' },
+      },
+    },
   },
   editorConfig: {},
   githubTemplates: {},
