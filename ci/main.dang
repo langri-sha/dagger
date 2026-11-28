@@ -94,9 +94,14 @@ type Ci {
   }
 
   """
-  Paths that installing and building create.
+  Paths that installing and building create, and the repository and the
+  merge base that langri-sha/github's merge-base action writes, whose contents
+  differ between checkouts of the same tree and would re-key every layer built
+  on the source.
   """
   let installed: [String!]! = [
+    ".git",
+    ".merge-base",
     "**/node_modules",
     "**/dist",
     "**/.next",
