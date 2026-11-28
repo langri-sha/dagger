@@ -20,6 +20,7 @@
 /changesets/dagger-module.toml linguist-generated
 /ci/dagger-module.toml linguist-generated
 /CODEOWNERS linguist-generated
+/dagger.toml linguist-generated
 /license linguist-generated
 /next/dagger-module.toml linguist-generated
 /nginx/dagger-module.toml linguist-generated
